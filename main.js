@@ -1,5 +1,5 @@
 // Tunisia with Sammy - Enhanced Itineraries with City Combinations
-// Fixed Facebook group links and removed duplicate community buttons
+// Fixed image paths and removed duplicate community buttons
 
 class TunisiaWithSammy {
     constructor() {
@@ -831,6 +831,16 @@ class TunisiaWithSammy {
         const highlights = itinerary.highlights || [];
         const schedule = itinerary.schedule || {};
 
+        // Fixed image paths - using your actual image files
+        const cityImages = {
+            'hammamet': 'istockphoto-1458724784-612x612.jpg',
+            'sousse': 'medina-of-sousse2.webp',
+            'monastir': 'Ribat-of-Monastir-833x1024.jpg',
+            'default': 'hero-banner.jpg'
+        };
+
+        const imagePath = `./resources/${cityImages[selectedCities[0]] || cityImages['default']}`;
+
         return {
             title: itinerary.title,
             content: `
@@ -841,7 +851,7 @@ class TunisiaWithSammy {
 
                     <div class="grid md:grid-cols-2 gap-8">
                         <div>
-                            <img src="./resources/${selectedCities[0] || 'coastal'}-beach.jpg" alt="${itinerary.title}" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <img src="${imagePath}" alt="${itinerary.title}" class="w-full h-64 object-cover rounded-lg mb-4">
                             <h3 class="text-2xl font-bold mb-4">${itinerary.title}</h3>
                             <p class="text-gray-600 mb-6">${itinerary.description}</p>
                         </div>
@@ -951,6 +961,9 @@ class TunisiaWithSammy {
     }
 
     get3DayItinerary(selectedCities, citiesText) {
+        // Fixed image paths
+        const imagePath = './resources/0f7b0b0e3649cc138aa80f90aef4990322b555fe (1).jpg';
+
         return {
             title: `3-Day ${citiesText} Adventure`,
             content: `
@@ -961,7 +974,7 @@ class TunisiaWithSammy {
 
                     <div class="grid md:grid-cols-2 gap-8">
                         <div>
-                            <img src="./resources/coastal-view.jpg" alt="${citiesText}" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <img src="${imagePath}" alt="${citiesText}" class="w-full h-64 object-cover rounded-lg mb-4">
                             <h3 class="text-2xl font-bold mb-4">Your 3-Day ${citiesText} Journey</h3>
                             <p class="text-gray-600 mb-6">
                                 Experience the perfect blend of coastal beauty and cultural richness across ${citiesText}. 
@@ -1040,6 +1053,9 @@ class TunisiaWithSammy {
     }
 
     get7DayItinerary() {
+        // Fixed image paths
+        const imagePath = './resources/80d0d1d3b7b8dbb70279cdaf63f318fada387dbb.jpeg';
+
         return {
             title: '7-Day Ultimate Tunisian Coastal Journey',
             content: `
@@ -1050,7 +1066,7 @@ class TunisiaWithSammy {
 
                     <div class="grid md:grid-cols-2 gap-8">
                         <div>
-                            <img src="./resources/coastal-adventure.jpg" alt="7 Day Adventure" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <img src="${imagePath}" alt="7 Day Adventure" class="w-full h-64 object-cover rounded-lg mb-4">
                             <h3 class="text-2xl font-bold mb-4">Your Ultimate Tunisian Journey</h3>
                             <p class="text-gray-600 mb-6">
                                 Experience the complete beauty of Tunisia's coast with this comprehensive 7-day adventure. 
@@ -1160,6 +1176,16 @@ class TunisiaWithSammy {
     }
 
     getFallback1DayItinerary(cityCode, cityName) {
+        // Fixed image paths
+        const cityImages = {
+            'hammamet': 'istockphoto-1458724784-612x612.jpg',
+            'sousse': 'medina-of-sousse2.webp',
+            'monastir': 'Ribat-of-Monastir-833x1024.jpg',
+            'default': 'hero-banner.jpg'
+        };
+
+        const imagePath = `./resources/${cityImages[cityCode] || cityImages['default']}`;
+
         return {
             title: `1-Day ${cityName} Experience`,
             content: `
@@ -1170,7 +1196,7 @@ class TunisiaWithSammy {
 
                     <div class="grid md:grid-cols-2 gap-8">
                         <div>
-                            <img src="./resources/${cityCode}-beach.jpg" alt="${cityName}" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <img src="${imagePath}" alt="${cityName}" class="w-full h-64 object-cover rounded-lg mb-4">
                             <h3 class="text-2xl font-bold mb-4">Perfect Day in ${cityName}</h3>
                             <p class="text-gray-600 mb-6">
                                 Experience the best of ${cityName} in one perfect day. This carefully crafted itinerary takes you through 
