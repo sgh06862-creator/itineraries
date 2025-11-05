@@ -1,5 +1,5 @@
 // Tunisia with Sammy - Enhanced Itineraries with City Combinations
-// Fixed 3-day city combinations and enhanced 7-day content
+// Fixed Facebook group links and removed duplicate community buttons
 
 class TunisiaWithSammy {
     constructor() {
@@ -9,6 +9,7 @@ class TunisiaWithSammy {
         this.selectedCities = [];
         this.currentPackageType = '';
         this.isAdmin = false;
+        this.facebookGroupUrl = 'https://www.facebook.com/share/g/1Fw32ng2ep/';
         this.init();
     }
 
@@ -155,6 +156,13 @@ class TunisiaWithSammy {
                 const packageType = e.target.getAttribute('data-package');
                 this.showCitySelection(packageType);
             });
+        });
+
+        // Community buttons in package modal
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('join-community-btn')) {
+                this.joinFacebookGroup();
+            }
         });
 
         // Smooth scrolling for navigation links
@@ -577,7 +585,7 @@ class TunisiaWithSammy {
     }
 
     joinFacebookGroup() {
-        window.open('https://facebook.com/groups/tunisia-with-sammy', '_blank');
+        window.open(this.facebookGroupUrl, '_blank');
         this.showSuccessMessage('Redirecting to our Facebook community!');
     }
 
@@ -859,7 +867,7 @@ class TunisiaWithSammy {
                             Explore at your own pace and discover authentic experiences that most tourists miss.
                         </p>
                         <div class="text-center">
-                            <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-colors duration-200">
+                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold">
                                 Join Our Community for More Tips
                             </button>
                         </div>
@@ -939,7 +947,6 @@ class TunisiaWithSammy {
     }
 
     get1DayItinerary(cityCode, cityName) {
-        // ... (keep existing 1-day content, it's working well)
         return this.getFallback1DayItinerary(cityCode, cityName);
     }
 
@@ -1012,6 +1019,19 @@ class TunisiaWithSammy {
                                 </div>
                                 <p class="text-green-800">Explore your final city or return to favorite spots, marina visits, souvenir shopping, and departure preparations.</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
+                        <h4 class="text-xl font-bold mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
+                        <p class="text-center text-orange-700 mb-4">
+                            This is a completely free itinerary created by Sammy, your local Tunisia expert. 
+                            Explore at your own pace and discover authentic experiences that most tourists miss.
+                        </p>
+                        <div class="text-center">
+                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold">
+                                Join Our Community for More Tips
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1121,16 +1141,83 @@ class TunisiaWithSammy {
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
+                        <h4 class="text-xl font-bold mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
+                        <p class="text-center text-orange-700 mb-4">
+                            This is a completely free itinerary created by Sammy, your local Tunisia expert. 
+                            Explore at your own pace and discover authentic experiences that most tourists miss.
+                        </p>
+                        <div class="text-center">
+                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold">
+                                Join Our Community for More Tips
+                            </button>
+                        </div>
+                    </div>
                 </div>
             `
         };
     }
 
     getFallback1DayItinerary(cityCode, cityName) {
-        // ... (existing 1-day fallback content)
         return {
             title: `1-Day ${cityName} Experience`,
-            content: `<div>Fallback content for ${cityName}</div>`
+            content: `
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold text-blue-800 text-center">🎯 1-Day ${cityName} Adventure</h3>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <img src="./resources/${cityCode}-beach.jpg" alt="${cityName}" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <h3 class="text-2xl font-bold mb-4">Perfect Day in ${cityName}</h3>
+                            <p class="text-gray-600 mb-6">
+                                Experience the best of ${cityName} in one perfect day. This carefully crafted itinerary takes you through 
+                                the most beautiful spots, authentic experiences, and hidden gems that make ${cityName} special.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold mb-4">🌟 What's Included:</h4>
+                            <ul class="space-y-3 mb-6">
+                                <li class="flex items-start">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                                    <span class="text-gray-700">Beautiful beach relaxation and swimming</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                                    <span class="text-gray-700">Historic site exploration</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                                    <span class="text-gray-700">Authentic local cuisine experience</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                                    <span class="text-gray-700">Cultural immersion activities</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                                    <span class="text-gray-700">Professional photography spots</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
+                        <h4 class="text-xl font-bold mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
+                        <p class="text-center text-orange-700 mb-4">
+                            This is a completely free itinerary created by Sammy, your local Tunisia expert. 
+                            Explore at your own pace and discover authentic experiences that most tourists miss.
+                        </p>
+                        <div class="text-center">
+                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold">
+                                Join Our Community for More Tips
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `
         };
     }
 
