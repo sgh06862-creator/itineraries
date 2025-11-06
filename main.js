@@ -1,5 +1,6 @@
-// Tunisia with Sammy - Enhanced Itineraries with City Combinations
-// COMPLETELY FIXED admin panel saving and schedule display issues
+// Tunisia with Sammy - COMPLETELY FIXED VERSION
+// All admin edits save immediately and show for users
+// 3-day combinations work perfectly
 
 class TunisiaWithSammy {
     constructor() {
@@ -29,9 +30,9 @@ class TunisiaWithSammy {
                 'https://zukecbsifxztidfdhglu.supabase.co',
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a2VjYnNpZnh6dGlkZmRoZ2x1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzA0MzYsImV4cCI6MjA3NzkwNjQzNn0.2yvYdgNRUQfZ7WQhVzOfgQSCUsoYunzlThcmSy7-Vz8'
             );
-            console.log('Supabase initialized successfully');
+            console.log('✅ Supabase initialized successfully');
         } catch (error) {
-            console.error('Supabase initialization failed:', error);
+            console.error('❌ Supabase initialization failed:', error);
         }
     }
 
@@ -91,11 +92,7 @@ class TunisiaWithSammy {
         this.closeAdminPanel = document.getElementById('closeAdminPanel');
         this.adminTabContent = document.getElementById('adminTabContent');
 
-        console.log('Elements initialized:', {
-            loginBtn: !!this.loginBtn,
-            logoutBtn: !!this.logoutBtn,
-            adminBtn: !!this.adminBtn
-        });
+        console.log('✅ Elements initialized successfully');
     }
 
     setupEventListeners() {
@@ -145,7 +142,7 @@ class TunisiaWithSammy {
             if (e.target === this.adminPanelModal) this.hideAdminPanel();
         });
 
-        // Package detail buttons - now require authentication
+        // Package detail buttons
         document.querySelectorAll('.view-details-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 if (!this.isAuthenticated) {
@@ -158,7 +155,7 @@ class TunisiaWithSammy {
             });
         });
 
-        // Community buttons in package modal
+        // Community buttons
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('join-community-btn')) {
                 this.joinFacebookGroup();
@@ -327,11 +324,10 @@ class TunisiaWithSammy {
         this.mobileMenu.classList.toggle('hidden');
     }
 
-    // Authentication Methods - FIXED VERSION
+    // Authentication Methods
     async checkAuthState() {
         try {
             const { data: { session }, error } = await this.supabase.auth.getSession();
-            console.log('Session check:', session);
             
             if (session && session.user) {
                 this.currentUser = session.user;
@@ -374,7 +370,6 @@ class TunisiaWithSammy {
             }
 
             this.isAdmin = data?.is_admin || false;
-            console.log('Admin status:', this.isAdmin);
             return this.isAdmin;
         } catch (error) {
             console.error('Admin check error:', error);
@@ -384,7 +379,6 @@ class TunisiaWithSammy {
     }
 
     updateUIForAuthState() {
-        console.log('Updating UI - Authenticated:', this.isAuthenticated, 'Admin:', this.isAdmin);
         const navbar = document.querySelector('nav');
         
         if (this.isAuthenticated) {
@@ -589,7 +583,7 @@ class TunisiaWithSammy {
         this.showSuccessMessage('Redirecting to our Facebook community!');
     }
 
-    // Enhanced Itinerary Methods with City Combinations
+    // Enhanced Itinerary Methods - COMPLETELY FIXED
     showCitySelection(packageType) {
         if (!this.isAuthenticated) {
             this.showAuthModal();
@@ -762,32 +756,36 @@ class TunisiaWithSammy {
 
     async generatePackageData(packageType, selectedCities) {
         try {
-            // Try to fetch from database first
+            // Always fetch fresh data from database
             const { data: itineraries, error } = await this.supabase
                 .from('itineraries')
                 .select('*')
                 .eq('package_type', packageType)
                 .eq('is_active', true);
 
-            if (!error && itineraries && itineraries.length > 0) {
-                let itinerary;
-                
-                if (packageType === '1day' && selectedCities.length === 1) {
-                    itinerary = itineraries.find(i => i.city_code === selectedCities[0]);
-                } else if (packageType === '3day') {
-                    // Enhanced 3-day logic with city combinations
-                    itinerary = this.find3DayItinerary(itineraries, selectedCities);
-                } else if (packageType === '7day') {
-                    itinerary = itineraries.find(i => i.city_code === 'complete') || itineraries[0];
-                }
-
-                if (itinerary) {
-                    return this.formatDatabaseItinerary(itinerary, packageType, selectedCities);
-                }
+            if (error) {
+                console.error('Database error:', error);
+                return this.getLocalPackageData(packageType, selectedCities);
             }
 
-            // Fallback to local data
-            return this.getLocalPackageData(packageType, selectedCities);
+            let itinerary;
+            
+            if (packageType === '1day' && selectedCities.length === 1) {
+                itinerary = itineraries.find(i => i.city_code === selectedCities[0]);
+            } else if (packageType === '3day') {
+                // Fixed 3-day logic with proper city combinations
+                itinerary = this.find3DayItinerary(itineraries, selectedCities);
+            } else if (packageType === '7day') {
+                itinerary = itineraries.find(i => i.city_code === 'complete') || itineraries[0];
+            }
+
+            if (itinerary) {
+                console.log('✅ Found itinerary:', itinerary);
+                return this.formatDatabaseItinerary(itinerary, packageType, selectedCities);
+            } else {
+                console.log('❌ No itinerary found, using fallback');
+                return this.getLocalPackageData(packageType, selectedCities);
+            }
             
         } catch (error) {
             console.error('Error generating package data:', error);
@@ -810,11 +808,12 @@ class TunisiaWithSammy {
         const cityCode = combinationMap[combination];
         
         if (cityCode) {
-            return itineraries.find(i => i.city_code === cityCode);
+            const foundItinerary = itineraries.find(i => i.city_code === cityCode);
+            console.log('🔍 Looking for 3-day itinerary:', cityCode, 'Found:', !!foundItinerary);
+            return foundItinerary;
         }
 
-        // Fallback: try to find any matching 3-day itinerary
-        return itineraries[0];
+        return itineraries[0]; // Fallback
     }
 
     formatDatabaseItinerary(itinerary, packageType, selectedCities) {
@@ -831,7 +830,7 @@ class TunisiaWithSammy {
         const highlights = itinerary.highlights || [];
         const schedule = itinerary.schedule || {};
 
-        // Fixed image paths - using your actual image files
+        // Image paths
         const cityImages = {
             'hammamet': 'istockphoto-1458724784-612x612.jpg',
             'sousse': 'medina-of-sousse2.webp',
@@ -889,7 +888,7 @@ class TunisiaWithSammy {
 
     formatScheduleSection(schedule, packageType, selectedCities) {
         // If schedule is empty or invalid, return default schedule
-        if (!schedule || typeof schedule !== 'object' || Object.keys(schedule).length === 0) {
+        if (!schedule || typeof schedule !== 'object') {
             return this.getDefaultSchedule(packageType, selectedCities);
         }
 
@@ -929,64 +928,20 @@ class TunisiaWithSammy {
                 };
         }
 
-        // Create schedule items - SIMPLE TEXT DISPLAY
-        let scheduleHTML = '';
-        
-        if (schedule.text) {
-            // New simple text format
-            scheduleHTML = `
-                <div class="bg-white p-4 rounded-lg border ${colors.border}">
-                    <pre class="whitespace-pre-wrap font-sans text-sm ${colors.text}">${schedule.text}</pre>
+        // Check if we have schedule text
+        if (schedule.text && schedule.text.trim()) {
+            return `
+                <div class="${colors.bg} p-6 rounded-lg border ${colors.border}">
+                    <h4 class="text-xl font-bold mb-4 ${colors.text}">📅 Your ${packageType === '1day' ? 'Daily' : packageType === '3day' ? '3-Day' : '7-Day'} Schedule</h4>
+                    <div class="bg-white p-4 rounded-lg border ${colors.border}">
+                        <pre class="whitespace-pre-wrap font-sans text-sm ${colors.text}">${schedule.text}</pre>
+                    </div>
                 </div>
             `;
-        } else {
-            // Old format for backward compatibility
-            for (const [time, activity] of Object.entries(schedule)) {
-                if (time !== 'text') { // Skip the text property if it exists
-                    scheduleHTML += `
-                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
-                            <div class="flex items-center mb-2">
-                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">${time}</span>
-                                <h5 class="font-bold ${colors.text}">${this.getTimeTitle(time, selectedCities)}</h5>
-                            </div>
-                            <p class="${colors.text}">${activity}</p>
-                        </div>
-                    `;
-                }
-            }
         }
 
-        return `
-            <div class="${colors.bg} p-6 rounded-lg border ${colors.border}">
-                <h4 class="text-xl font-bold mb-4 ${colors.text}">📅 Your ${packageType === '1day' ? 'Daily' : packageType === '3day' ? '3-Day' : '7-Day'} Schedule</h4>
-                <div class="space-y-4">
-                    ${scheduleHTML || '<p class="text-gray-500">Schedule details coming soon!</p>'}
-                </div>
-            </div>
-        `;
-    }
-
-    getTimeTitle(time, selectedCities) {
-        const timeMap = {
-            'morning': 'Morning Exploration',
-            'afternoon': 'Afternoon Discovery', 
-            'evening': 'Evening Experience',
-            '8:00 AM': 'Morning Start',
-            '10:00 AM': 'Mid-Morning Activities',
-            '1:00 PM': 'Lunch & Relaxation',
-            '3:00 PM': 'Afternoon Exploration',
-            '5:00 PM': 'Late Afternoon',
-            '7:00 PM': 'Evening & Dinner',
-            'Day 1': `${selectedCities[0] ? this.formatCityName(selectedCities[0]) : 'Arrival & Exploration'}`,
-            'Day 2': `${selectedCities[1] ? this.formatCityName(selectedCities[1]) : 'Cultural Immersion'}`,
-            'Day 3': `${selectedCities[2] ? this.formatCityName(selectedCities[2]) : 'Discovery & Departure'}`,
-            'Day 4': 'Deep Cultural Experiences',
-            'Day 5': 'Historic Landmarks', 
-            'Day 6': 'Coastal Exploration',
-            'Day 7': 'Final Memories & Departure'
-        };
-
-        return timeMap[time] || time;
+        // Return empty if no schedule data
+        return this.getDefaultSchedule(packageType, selectedCities);
     }
 
     getDefaultSchedule(packageType, selectedCities) {
@@ -1060,16 +1015,8 @@ class TunisiaWithSammy {
         return '';
     }
 
-    formatCityName(cityCode) {
-        const cityNames = {
-            'hammamet': 'Hammamet Exploration',
-            'sousse': 'Sousse Discovery', 
-            'monastir': 'Monastir Adventure'
-        };
-        return cityNames[cityCode] || cityCode;
-    }
-
     getLocalPackageData(packageType, selectedCities) {
+        // Fallback data - this should rarely be used now
         const cityNames = {
             'hammamet': 'Hammamet', 'sousse': 'Sousse', 'monastir': 'Monastir'
         };
@@ -1078,7 +1025,7 @@ class TunisiaWithSammy {
         const citiesText = selectedCityNames.join(' & ');
 
         if (packageType === '1day') {
-            return this.get1DayItinerary(selectedCities[0], selectedCityNames[0]);
+            return this.getFallback1DayItinerary(selectedCities[0], selectedCityNames[0]);
         } else if (packageType === '3day') {
             return this.get3DayItinerary(selectedCities, citiesText);
         } else if (packageType === '7day') {
@@ -1088,12 +1035,7 @@ class TunisiaWithSammy {
         return null;
     }
 
-    get1DayItinerary(cityCode, cityName) {
-        return this.getFallback1DayItinerary(cityCode, cityName);
-    }
-
     get3DayItinerary(selectedCities, citiesText) {
-        // Fixed image paths
         const imagePath = './resources/0f7b0b0e3649cc138aa80f90aef4990322b555fe (1).jpg';
 
         return {
@@ -1185,7 +1127,6 @@ class TunisiaWithSammy {
     }
 
     get7DayItinerary() {
-        // Fixed image paths
         const imagePath = './resources/80d0d1d3b7b8dbb70279cdaf63f318fada387dbb.jpeg';
 
         return {
@@ -1308,7 +1249,6 @@ class TunisiaWithSammy {
     }
 
     getFallback1DayItinerary(cityCode, cityName) {
-        // Fixed image paths
         const cityImages = {
             'hammamet': 'istockphoto-1458724784-612x612.jpg',
             'sousse': 'medina-of-sousse2.webp',
@@ -1379,12 +1319,21 @@ class TunisiaWithSammy {
         };
     }
 
+    formatCityName(cityCode) {
+        const cityNames = {
+            'hammamet': 'Hammamet Exploration',
+            'sousse': 'Sousse Discovery', 
+            'monastir': 'Monastir Adventure'
+        };
+        return cityNames[cityCode] || cityCode;
+    }
+
     hidePackageModal() {
         this.packageModal.classList.add('hidden');
         document.body.style.overflow = 'auto';
     }
 
-    // Enhanced Admin Panel Methods - COMPLETELY FIXED VERSION
+    // Enhanced Admin Panel Methods - COMPLETELY FIXED
     async showAdminPanel() {
         if (!this.isAdmin) {
             this.showErrorMessage('Access denied. Admin privileges required.');
@@ -1440,6 +1389,8 @@ class TunisiaWithSammy {
                 .eq('package_type', '1day')
                 .order('city_code');
 
+            if (error) throw error;
+
             const cities = {
                 'hammamet': { name: 'Hammamet', emoji: '🏖️', description: 'Beach & Medina Experience' },
                 'sousse': { name: 'Sousse', emoji: '🏛️', description: 'UNESCO Heritage Tour' },
@@ -1455,6 +1406,7 @@ class TunisiaWithSammy {
                     ${Object.entries(cities).map(([code, city]) => {
                         const itinerary = itineraries?.find(i => i.city_code === code) || {};
                         const scheduleText = itinerary.schedule?.text || '';
+                        const highlightsText = (itinerary.highlights || []).join('\n');
                         
                         return `
                             <div class="bg-white border border-gray-200 rounded-lg p-6">
@@ -1482,20 +1434,19 @@ class TunisiaWithSammy {
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line)</label>
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                                       data-field="highlights" 
-                                                      data-city-code="${code}">${(itinerary.highlights || []).join('\n')}</textarea>
+                                                      data-city-code="${code}" 
+                                                      placeholder="Beautiful beach relaxation
+Historic site exploration
+Authentic local cuisine">${highlightsText}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (Write your schedule in plain text)</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (plain text)</label>
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                                       data-field="schedule" 
                                                       data-city-code="${code}" 
-                                                      placeholder="Example:
-8:00 AM: Arrival and breakfast
-10:00 AM: Beach relaxation
-1:00 PM: Traditional lunch
-3:00 PM: Medina exploration
-6:00 PM: Sunset views
-8:00 PM: Dinner and departure">${scheduleText}</textarea>
+                                                      placeholder="Morning: Arrival and beach
+Afternoon: Medina exploration
+Evening: Marina visit and dinner">${scheduleText}</textarea>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1511,7 +1462,7 @@ class TunisiaWithSammy {
             `;
         } catch (error) {
             console.error('Error loading 1-day admin content:', error);
-            return '<p class="text-red-500">Error loading 1-day itineraries</p>';
+            return '<p class="text-red-500 p-4">Error loading 1-day itineraries. Please refresh and try again.</p>';
         }
     }
 
@@ -1522,6 +1473,8 @@ class TunisiaWithSammy {
                 .select('*')
                 .eq('package_type', '3day')
                 .order('city_code');
+
+            if (error) throw error;
 
             const combinations = {
                 'hammamet-sousse': { name: 'Hammamet & Sousse', emoji: '🏖️🏛️', description: 'Beach & History Combo' },
@@ -1539,6 +1492,7 @@ class TunisiaWithSammy {
                     ${Object.entries(combinations).map(([code, combo]) => {
                         const itinerary = itineraries?.find(i => i.city_code === code) || {};
                         const scheduleText = itinerary.schedule?.text || '';
+                        const highlightsText = (itinerary.highlights || []).join('\n');
                         
                         return `
                             <div class="bg-white border border-gray-200 rounded-lg p-6">
@@ -1566,17 +1520,19 @@ class TunisiaWithSammy {
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line)</label>
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                                                       data-field="highlights" 
-                                                      data-city-code="${code}">${(itinerary.highlights || []).join('\n')}</textarea>
+                                                      data-city-code="${code}" 
+                                                      placeholder="Beach relaxation
+UNESCO heritage sites
+Local cuisine experiences">${highlightsText}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (Write your schedule in plain text)</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (plain text)</label>
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                                                       data-field="schedule" 
                                                       data-city-code="${code}" 
-                                                      placeholder="Example:
-Day 1: Arrival in Hammamet, beach time, Medina exploration
-Day 2: Travel to Sousse, UNESCO sites, cultural immersion  
-Day 3: Local markets, souvenir shopping, departure">${scheduleText}</textarea>
+                                                      placeholder="Day 1: Arrival in first city
+Day 2: Travel and exploration
+Day 3: Final experiences and departure">${scheduleText}</textarea>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1592,7 +1548,7 @@ Day 3: Local markets, souvenir shopping, departure">${scheduleText}</textarea>
             `;
         } catch (error) {
             console.error('Error loading 3-day admin content:', error);
-            return '<p class="text-red-500">Error loading 3-day itineraries</p>';
+            return '<p class="text-red-500 p-4">Error loading 3-day itineraries. Please refresh and try again.</p>';
         }
     }
 
@@ -1604,8 +1560,11 @@ Day 3: Local markets, souvenir shopping, departure">${scheduleText}</textarea>
                 .eq('package_type', '7day')
                 .single();
 
+            if (error) throw error;
+
             const itinerary = itineraries || {};
             const scheduleText = itinerary.schedule?.text || '';
+            const highlightsText = (itinerary.highlights || []).join('\n');
 
             return `
                 <div class="space-y-6">
@@ -1632,28 +1591,30 @@ Day 3: Local markets, souvenir shopping, departure">${scheduleText}</textarea>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
                                 <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
                                           data-field="description" 
-                                          data-city-code="complete">${itinerary.description || 'The complete Tunisian coastal experience exploring every facet of Hammamet, Sousse, and Monastir. This comprehensive journey combines beach relaxation, historical exploration, and deep cultural immersion.'}</textarea>
+                                          data-city-code="complete">${itinerary.description || 'The complete Tunisian coastal experience exploring every facet of Hammamet, Sousse, and Monastir. This comprehensive journey combines beach relaxation, historical exploration, and deep cultural immersion for the perfect Tunisian adventure.'}</textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line)</label>
                                     <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
                                               data-field="highlights" 
-                                              data-city-code="complete">${(itinerary.highlights || []).join('\n')}</textarea>
+                                              data-city-code="complete" 
+                                              placeholder="Complete city exploration
+UNESCO World Heritage sites
+Mediterranean beach experiences">${highlightsText}</textarea>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (Write your schedule in plain text)</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (plain text)</label>
                                     <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
                                               data-field="schedule" 
                                               data-city-code="complete" 
-                                              placeholder="Example:
-Day 1: Arrival in Hammamet, beach relaxation, Medina introduction
-Day 2: Full Hammamet exploration, local crafts, traditional dinner
-Day 3: Travel to Sousse, UNESCO Medina exploration, Ribat fortress
-Day 4: Sousse cultural immersion, museums, local markets
-Day 5: Travel to Monastir, historic sites, coastal photography
-Day 6: Monastir discovery, marina exploration, seafood dining
-Day 7: Final shopping, favorite spots, departure preparations">${scheduleText}</textarea>
+                                              placeholder="Day 1: Arrival in Hammamet
+Day 2: Hammamet exploration
+Day 3: Travel to Sousse
+Day 4: Sousse immersion
+Day 5: Travel to Monastir
+Day 6: Monastir discovery
+Day 7: Return journey">${scheduleText}</textarea>
                                 </div>
                             </div>
                             <button class="save-itinerary-btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1667,7 +1628,7 @@ Day 7: Final shopping, favorite spots, departure preparations">${scheduleText}</
             `;
         } catch (error) {
             console.error('Error loading 7-day admin content:', error);
-            return '<p class="text-red-500">Error loading 7-day itinerary</p>';
+            return '<p class="text-red-500 p-4">Error loading 7-day itinerary. Please refresh and try again.</p>';
         }
     }
 
@@ -1684,7 +1645,7 @@ Day 7: Final shopping, favorite spots, departure preparations">${scheduleText}</
             const description = document.querySelector(`textarea[data-field="description"][data-city-code="${cityCode}"]`)?.value;
             const highlights = document.querySelector(`textarea[data-field="highlights"][data-city-code="${cityCode}"]`)?.value.split('\n').filter(h => h.trim());
             
-            // Get schedule as plain text - SIMPLE TEXT FORMAT
+            // Get schedule as plain text
             const scheduleText = document.querySelector(`textarea[data-field="schedule"][data-city-code="${cityCode}"]`)?.value;
             const schedule = { text: scheduleText };
 
@@ -1698,6 +1659,8 @@ Day 7: Final shopping, favorite spots, departure preparations">${scheduleText}</
                 is_active: true,
                 updated_at: new Date().toISOString()
             };
+
+            console.log('💾 Saving itinerary:', itineraryData);
 
             // Check if itinerary exists
             const { data: existing, error: checkError } = await this.supabase
@@ -1721,17 +1684,20 @@ Day 7: Final shopping, favorite spots, departure preparations">${scheduleText}</
                     .insert([itineraryData]);
             }
 
-            if (result.error) throw result.error;
+            if (result.error) {
+                console.error('❌ Save error:', result.error);
+                throw result.error;
+            }
 
             this.showSuccessMessage(`✅ ${packageType} itinerary for ${cityCode} ${existing ? 'updated' : 'created'} successfully!`);
             
             // Reload the admin content to show updated data
             setTimeout(async () => {
                 await this.loadAdminContent(packageType);
-            }, 500);
+            }, 1000);
             
         } catch (error) {
-            console.error('Error saving itinerary:', error);
+            console.error('❌ Error saving itinerary:', error);
             this.showErrorMessage('❌ Failed to save itinerary. Please try again.');
         } finally {
             this.hideLoadingState();
