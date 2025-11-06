@@ -1,5 +1,5 @@
-// Tunisia with Sammy - AUTO LOGIN AFTER SIGNUP + MOBILE FIXED
-// Users login automatically after signing up
+// Tunisia with Sammy - MOBILE SCROLLING FIXED
+// Fixed mobile scrolling and touch interactions
 
 class TunisiaWithSammy {
     constructor() {
@@ -142,9 +142,12 @@ class TunisiaWithSammy {
             if (e.target === this.adminPanelModal) this.hideAdminPanel();
         });
 
-        // Package detail buttons
+        // Package detail buttons - FIXED FOR MOBILE
         document.querySelectorAll('.view-details-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 if (!this.isAuthenticated) {
                     this.currentPackageType = e.target.getAttribute('data-package');
                     this.showAuthModal();
@@ -194,6 +197,21 @@ class TunisiaWithSammy {
         // Mobile viewport height fix
         window.addEventListener('resize', () => this.setupMobileViewport());
         window.addEventListener('orientationchange', () => this.setupMobileViewport());
+
+        // FIX: Prevent body scroll when modals are open on mobile
+        document.addEventListener('touchmove', (e) => {
+            if (this.isModalOpen()) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
+
+    // NEW: Check if any modal is open
+    isModalOpen() {
+        return !this.authModal.classList.contains('hidden') || 
+               !this.citySelectionModal.classList.contains('hidden') || 
+               !this.packageModal.classList.contains('hidden') || 
+               !this.adminPanelModal.classList.contains('hidden');
     }
 
     setupMobileViewport() {
@@ -206,6 +224,23 @@ class TunisiaWithSammy {
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
         }, 100);
+
+        // FIX: Ensure modals are properly sized on mobile
+        this.fixModalHeights();
+    }
+
+    // NEW: Fix modal heights for mobile
+    fixModalHeights() {
+        const modals = [this.authModal, this.citySelectionModal, this.packageModal, this.adminPanelModal];
+        modals.forEach(modal => {
+            if (modal && !modal.classList.contains('hidden')) {
+                const content = modal.querySelector('.bg-white');
+                if (content) {
+                    content.style.maxHeight = '90vh';
+                    content.style.overflowY = 'auto';
+                }
+            }
+        });
     }
 
     initializeAnimations() {
@@ -452,6 +487,7 @@ class TunisiaWithSammy {
         this.resetAuthForm();
         this.authModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        this.fixModalHeights();
     }
 
     hideAuthModal() {
@@ -633,7 +669,7 @@ class TunisiaWithSammy {
         this.showSuccessMessage('Redirecting to our Facebook community!');
     }
 
-    // Enhanced Itinerary Methods - MOBILE FRIENDLY
+    // ENHANCED Itinerary Methods - MOBILE SCROLLING FIXED
     showCitySelection(packageType) {
         if (!this.isAuthenticated) {
             this.showAuthModal();
@@ -663,6 +699,7 @@ class TunisiaWithSammy {
 
         this.citySelectionModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        this.fixModalHeights();
     }
 
     renderSingleCitySelection() {
@@ -673,19 +710,24 @@ class TunisiaWithSammy {
         ];
 
         this.citySelectionContent.innerHTML = `
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-h-[60vh] overflow-y-auto p-2">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto p-2 touch-pan-y" style="-webkit-overflow-scrolling: touch;">
                 ${cities.map(city => `
-                    <div class="city-option bg-white border-2 border-gray-200 rounded-xl p-4 md:p-6 text-center cursor-pointer transition-all duration-300 hover:shadow-lg min-h-[180px] flex flex-col justify-center" data-city="${city.id}">
-                        <div class="text-3xl md:text-4xl mb-2 md:mb-3">${city.emoji}</div>
-                        <h3 class="font-display text-lg md:text-xl font-bold text-gray-800 mb-1 md:mb-2">${city.name}</h3>
-                        <p class="text-gray-600 text-xs md:text-sm">${city.description}</p>
+                    <div class="city-option bg-white border-2 border-gray-200 rounded-xl p-6 text-center cursor-pointer transition-all duration-300 hover:shadow-lg min-h-[140px] flex flex-col justify-center touch-pan-y" 
+                         data-city="${city.id}"
+                         style="touch-action: pan-y;">
+                        <div class="text-4xl mb-3">${city.emoji}</div>
+                        <h3 class="font-display text-xl font-bold text-gray-800 mb-2">${city.name}</h3>
+                        <p class="text-gray-600 text-sm">${city.description}</p>
                     </div>
                 `).join('')}
             </div>
         `;
 
         this.citySelectionContent.querySelectorAll('.city-option').forEach(option => {
-            option.addEventListener('click', () => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 this.citySelectionContent.querySelectorAll('.city-option').forEach(opt => {
                     opt.classList.remove('selected', 'bg-blue-50', 'border-blue-500');
                 });
@@ -694,6 +736,15 @@ class TunisiaWithSammy {
                 this.selectedCities = [option.getAttribute('data-city')];
                 this.confirmCitySelection.disabled = false;
                 this.confirmCitySelection.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+
+            // Add touch events for better mobile
+            option.addEventListener('touchstart', (e) => {
+                e.currentTarget.style.transform = 'scale(0.98)';
+            });
+
+            option.addEventListener('touchend', (e) => {
+                e.currentTarget.style.transform = 'scale(1)';
             });
         });
 
@@ -709,31 +760,36 @@ class TunisiaWithSammy {
         ];
 
         this.citySelectionContent.innerHTML = `
-            <div class="text-center mb-4 md:mb-6">
-                <p class="text-gray-600 text-sm md:text-base">Select 2-3 cities for your 3-day adventure. All combinations are supported!</p>
+            <div class="text-center mb-4">
+                <p class="text-gray-600 text-sm">Select 2-3 cities for your 3-day adventure. All combinations are supported!</p>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-h-[50vh] overflow-y-auto p-2">
+            <div class="grid grid-cols-1 gap-4 max-h-[50vh] overflow-y-auto p-2 touch-pan-y" style="-webkit-overflow-scrolling: touch;">
                 ${cities.map(city => `
-                    <div class="city-option bg-white border-2 border-gray-200 rounded-xl p-4 md:p-6 text-center cursor-pointer transition-all duration-300 hover:shadow-lg min-h-[160px] flex flex-col justify-center" data-city="${city.id}">
-                        <div class="text-3xl md:text-4xl mb-2 md:mb-3">${city.emoji}</div>
-                        <h3 class="font-display text-lg md:text-xl font-bold text-gray-800 mb-1 md:mb-2">${city.name}</h3>
-                        <p class="text-gray-600 text-xs md:text-sm">${city.description}</p>
+                    <div class="city-option bg-white border-2 border-gray-200 rounded-xl p-6 text-center cursor-pointer transition-all duration-300 hover:shadow-lg min-h-[140px] flex flex-col justify-center touch-pan-y" 
+                         data-city="${city.id}"
+                         style="touch-action: pan-y;">
+                        <div class="text-4xl mb-3">${city.emoji}</div>
+                        <h3 class="font-display text-xl font-bold text-gray-800 mb-2">${city.name}</h3>
+                        <p class="text-gray-600 text-sm">${city.description}</p>
                         <div class="mt-2">
                             <input type="checkbox" class="city-checkbox hidden" data-city="${city.id}">
                         </div>
                     </div>
                 `).join('')}
             </div>
-            <div class="mt-4 md:mt-6 text-center">
+            <div class="mt-4 text-center">
                 <p class="text-sm text-gray-600" id="selectionCount">Selected: 0 cities</p>
-                <p class="text-xs text-blue-600 mt-1 md:mt-2" id="combinationHint"></p>
+                <p class="text-xs text-blue-600 mt-2" id="combinationHint"></p>
             </div>
         `;
 
         this.updateCombinationHint();
 
         this.citySelectionContent.querySelectorAll('.city-option').forEach(option => {
-            option.addEventListener('click', () => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const cityId = option.getAttribute('data-city');
                 const checkbox = option.querySelector('.city-checkbox');
                 
@@ -754,6 +810,15 @@ class TunisiaWithSammy {
                 this.confirmCitySelection.disabled = this.selectedCities.length < 2;
                 this.confirmCitySelection.classList.toggle('opacity-50', this.selectedCities.length < 2);
                 this.confirmCitySelection.classList.toggle('cursor-not-allowed', this.selectedCities.length < 2);
+            });
+
+            // Add touch events for better mobile
+            option.addEventListener('touchstart', (e) => {
+                e.currentTarget.style.transform = 'scale(0.98)';
+            });
+
+            option.addEventListener('touchend', (e) => {
+                e.currentTarget.style.transform = 'scale(1)';
             });
         });
 
@@ -798,6 +863,7 @@ class TunisiaWithSammy {
                 this.packageContent.innerHTML = packageData.content;
                 this.packageModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
+                this.fixModalHeights();
             } else {
                 throw new Error('No package data found');
             }
@@ -893,24 +959,24 @@ class TunisiaWithSammy {
         return {
             title: itinerary.title,
             content: `
-                <div class="space-y-4 md:space-y-6">
-                    <div class="bg-gradient-to-r from-blue-50 to-green-50 p-3 md:p-4 rounded-lg">
-                        <h3 class="text-base md:text-lg font-bold text-blue-800 text-center">🎯 Your Selected Cities: ${citiesText}</h3>
+                <div class="space-y-4 md:space-y-6 touch-pan-y" style="-webkit-overflow-scrolling: touch;">
+                    <div class="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold text-blue-800 text-center">🎯 Your Selected Cities: ${citiesText}</h3>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                    <div class="grid grid-cols-1 gap-4 md:gap-8">
                         <div>
-                            <img src="${imagePath}" alt="${itinerary.title}" class="w-full h-48 md:h-64 object-cover rounded-lg mb-3 md:mb-4">
-                            <h3 class="text-xl md:text-2xl font-bold mb-2 md:mb-4">${itinerary.title}</h3>
-                            <p class="text-gray-600 text-sm md:text-base mb-4 md:mb-6">${itinerary.description}</p>
+                            <img src="${imagePath}" alt="${itinerary.title}" class="w-full h-48 object-cover rounded-lg mb-4">
+                            <h3 class="text-2xl font-bold mb-4">${itinerary.title}</h3>
+                            <p class="text-gray-600 text-base mb-6">${itinerary.description}</p>
                         </div>
                         <div>
-                            <h4 class="text-lg md:text-xl font-bold mb-3 md:mb-4">🌟 Experience Highlights</h4>
-                            <ul class="space-y-2 md:space-y-3 mb-4 md:mb-6">
+                            <h4 class="text-xl font-bold mb-4">🌟 Experience Highlights</h4>
+                            <ul class="space-y-3 mb-6">
                                 ${highlights.map(highlight => `
                                     <li class="flex items-start">
-                                        <span class="w-2 h-2 bg-green-500 rounded-full mr-2 md:mr-3 mt-2 flex-shrink-0"></span>
-                                        <span class="text-gray-700 text-sm md:text-base">${highlight}</span>
+                                        <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                                        <span class="text-gray-700 text-base">${highlight}</span>
                                     </li>
                                 `).join('')}
                             </ul>
@@ -919,14 +985,15 @@ class TunisiaWithSammy {
                     
                     ${this.formatScheduleSection(schedule, packageType, selectedCities)}
                     
-                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-4 md:p-6 rounded-lg border border-orange-200">
-                        <h4 class="text-lg md:text-xl font-bold mb-3 md:mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
-                        <p class="text-center text-orange-700 text-sm md:text-base mb-3 md:mb-4">
+                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
+                        <h4 class="text-xl font-bold mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
+                        <p class="text-center text-orange-700 text-base mb-4">
                             This is a completely free itinerary created by Sammy, your local Tunisia expert. 
                             Explore at your own pace and discover authentic experiences that most tourists miss.
                         </p>
                         <div class="text-center">
-                            <button class="join-community-btn btn-primary text-white px-6 py-2 md:px-8 md:py-3 rounded-full font-semibold text-sm md:text-base">
+                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold text-base touch-pan-y" 
+                                    style="touch-action: pan-y;">
                                 Join Our Community for More Tips
                             </button>
                         </div>
@@ -978,10 +1045,10 @@ class TunisiaWithSammy {
 
         if (schedule.text && schedule.text.trim()) {
             return `
-                <div class="${colors.bg} p-4 md:p-6 rounded-lg border ${colors.border}">
-                    <h4 class="text-lg md:text-xl font-bold mb-3 md:mb-4 ${colors.text}">📅 Your ${packageType === '1day' ? 'Daily' : packageType === '3day' ? '3-Day' : '7-Day'} Schedule</h4>
-                    <div class="bg-white p-3 md:p-4 rounded-lg border ${colors.border}">
-                        <pre class="whitespace-pre-wrap font-sans text-xs md:text-sm ${colors.text}">${schedule.text}</pre>
+                <div class="${colors.bg} p-6 rounded-lg border ${colors.border}">
+                    <h4 class="text-xl font-bold mb-4 ${colors.text}">📅 Your ${packageType === '1day' ? 'Daily' : packageType === '3day' ? '3-Day' : '7-Day'} Schedule</h4>
+                    <div class="bg-white p-4 rounded-lg border ${colors.border}">
+                        <pre class="whitespace-pre-wrap font-sans text-sm ${colors.text}">${schedule.text}</pre>
                     </div>
                 </div>
             `;
@@ -1028,29 +1095,29 @@ class TunisiaWithSammy {
 
         if (packageType === '1day') {
             return `
-                <div class="${colors.bg} p-4 md:p-6 rounded-lg border ${colors.border}">
-                    <h4 class="text-lg md:text-xl font-bold mb-3 md:mb-4 ${colors.text}">📅 Your Daily Schedule</h4>
-                    <div class="space-y-3 md:space-y-4">
-                        <div class="bg-white p-3 md:p-4 rounded-lg border ${colors.border}">
+                <div class="${colors.bg} p-6 rounded-lg border ${colors.border}">
+                    <h4 class="text-xl font-bold mb-4 ${colors.text}">📅 Your Daily Schedule</h4>
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
                             <div class="flex items-center mb-2">
-                                <span class="${colors.badge} text-white px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-bold mr-2 md:mr-3">Morning</span>
-                                <h5 class="font-bold ${colors.text} text-sm md:text-base">Arrival & First Exploration</h5>
+                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Morning</span>
+                                <h5 class="font-bold ${colors.text} text-base">Arrival & First Exploration</h5>
                             </div>
-                            <p class="${colors.text} text-xs md:text-sm">Start your day with arrival and initial exploration of the city's main attractions.</p>
+                            <p class="${colors.text} text-sm">Start your day with arrival and initial exploration of the city's main attractions.</p>
                         </div>
-                        <div class="bg-white p-3 md:p-4 rounded-lg border ${colors.border}">
+                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
                             <div class="flex items-center mb-2">
-                                <span class="${colors.badge} text-white px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-bold mr-2 md:mr-3">Afternoon</span>
-                                <h5 class="font-bold ${colors.text} text-sm md:text-base">Cultural Immersion</h5>
+                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Afternoon</span>
+                                <h5 class="font-bold ${colors.text} text-base">Cultural Immersion</h5>
                             </div>
-                            <p class="${colors.text} text-xs md:text-sm">Experience local culture, visit historical sites, and enjoy authentic cuisine.</p>
+                            <p class="${colors.text} text-sm">Experience local culture, visit historical sites, and enjoy authentic cuisine.</p>
                         </div>
-                        <div class="bg-white p-3 md:p-4 rounded-lg border ${colors.border}">
+                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
                             <div class="flex items-center mb-2">
-                                <span class="${colors.badge} text-white px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-bold mr-2 md:mr-3">Evening</span>
-                                <h5 class="font-bold ${colors.text} text-sm md:text-base">Relaxation & Departure</h5>
+                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Evening</span>
+                                <h5 class="font-bold ${colors.text} text-base">Relaxation & Departure</h5>
                             </div>
-                            <p class="${colors.text} text-xs md:text-sm">Evening relaxation, souvenir shopping, and departure preparations.</p>
+                            <p class="${colors.text} text-sm">Evening relaxation, souvenir shopping, and departure preparations.</p>
                         </div>
                     </div>
                 </div>
@@ -1074,6 +1141,7 @@ class TunisiaWithSammy {
 
         this.adminPanelModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        this.fixModalHeights();
         await this.loadAdminContent('1day');
     }
 
@@ -1130,10 +1198,10 @@ class TunisiaWithSammy {
             };
 
             return `
-                <div class="space-y-4 md:space-y-6">
-                    <div class="bg-blue-50 p-3 md:p-4 rounded-lg">
-                        <h3 class="text-base md:text-lg font-bold text-blue-800">1-Day Itineraries Management</h3>
-                        <p class="text-blue-600 text-xs md:text-sm">Edit the detailed itineraries for each city</p>
+                <div class="space-y-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold text-blue-800">1-Day Itineraries Management</h3>
+                        <p class="text-blue-600 text-sm">Edit the detailed itineraries for each city</p>
                     </div>
                     ${Object.entries(cities).map(([code, city]) => {
                         const itinerary = itineraries?.find(i => i.city_code === code) || {};
@@ -1141,43 +1209,43 @@ class TunisiaWithSammy {
                         const highlightsText = (itinerary.highlights || []).join('\n');
                         
                         return `
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 md:p-6">
-                                <div class="flex items-center mb-3 md:mb-4">
-                                    <span class="text-2xl mr-2 md:mr-3">${city.emoji}</span>
-                                    <h3 class="text-lg md:text-xl font-bold text-gray-800">${city.name} - ${city.description}</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <div class="flex items-center mb-4">
+                                    <span class="text-2xl mr-3">${city.emoji}</span>
+                                    <h3 class="text-xl font-bold text-gray-800">${city.name} - ${city.description}</h3>
                                 </div>
-                                <div class="space-y-3 md:space-y-4">
+                                <div class="space-y-4">
                                     <div>
-                                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Itinerary Title</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Itinerary Title</label>
                                         <input type="text" 
-                                               class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base" 
                                                value="${this.escapeHtml(itinerary.title || `1-Day ${city.name} Experience`)}" 
                                                data-field="title" 
                                                data-city-code="${code}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Description</label>
-                                        <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-20 md:h-24 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base" 
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base" 
                                                   data-field="description" 
                                                   data-city-code="${code}">${this.escapeHtml(itinerary.description || `Experience the best of ${city.name} in one perfect day. Discover beautiful beaches, historic sites, and authentic culture.`)}</textarea>
                                     </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Highlights (one per line)</label>
-                                            <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-24 md:h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line)</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base" 
                                                       data-field="highlights" 
                                                       data-city-code="${code}" 
                                                       placeholder="Beautiful beach relaxation\nHistoric site exploration\nAuthentic local cuisine">${this.escapeHtml(highlightsText)}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Schedule (plain text)</label>
-                                            <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-24 md:h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (plain text)</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base" 
                                                       data-field="schedule" 
                                                       data-city-code="${code}" 
                                                       placeholder="Morning: Arrival and beach\nAfternoon: Medina exploration\nEvening: Marina visit and dinner">${this.escapeHtml(scheduleText)}</textarea>
                                         </div>
                                     </div>
-                                    <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors duration-200 text-sm md:text-base" 
+                                    <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200 text-base" 
                                             data-package-type="1day" 
                                             data-city-code="${code}">
                                         💾 Save ${city.name} Itinerary
@@ -1212,10 +1280,10 @@ class TunisiaWithSammy {
             };
 
             return `
-                <div class="space-y-4 md:space-y-6">
-                    <div class="bg-green-50 p-3 md:p-4 rounded-lg">
-                        <h3 class="text-base md:text-lg font-bold text-green-800">3-Day Itineraries Management</h3>
-                        <p class="text-green-600 text-xs md:text-sm">Edit multi-city combination itineraries</p>
+                <div class="space-y-6">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold text-green-800">3-Day Itineraries Management</h3>
+                        <p class="text-green-600 text-sm">Edit multi-city combination itineraries</p>
                     </div>
                     ${Object.entries(combinations).map(([code, combo]) => {
                         const itinerary = itineraries?.find(i => i.city_code === code) || {};
@@ -1223,43 +1291,43 @@ class TunisiaWithSammy {
                         const highlightsText = (itinerary.highlights || []).join('\n');
                         
                         return `
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 md:p-6">
-                                <div class="flex items-center mb-3 md:mb-4">
-                                    <span class="text-2xl mr-2 md:mr-3">${combo.emoji}</span>
-                                    <h3 class="text-lg md:text-xl font-bold text-gray-800">${combo.name} - ${combo.description}</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <div class="flex items-center mb-4">
+                                    <span class="text-2xl mr-3">${combo.emoji}</span>
+                                    <h3 class="text-xl font-bold text-gray-800">${combo.name} - ${combo.description}</h3>
                                 </div>
-                                <div class="space-y-3 md:space-y-4">
+                                <div class="space-y-4">
                                     <div>
-                                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Itinerary Title</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Itinerary Title</label>
                                         <input type="text" 
-                                               class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm md:text-base" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base" 
                                                value="${this.escapeHtml(itinerary.title || `3-Day ${combo.name} Adventure`)}" 
                                                data-field="title" 
                                                data-city-code="${code}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Description</label>
-                                        <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-20 md:h-24 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm md:text-base" 
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base" 
                                                   data-field="description" 
                                                   data-city-code="${code}">${this.escapeHtml(itinerary.description || `Experience the perfect combination of ${combo.name} in three days. Carefully crafted itinerary for the best experience.`)}</textarea>
                                     </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Highlights (one per line)</label>
-                                            <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-24 md:h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm md:text-base" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line)</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base" 
                                                       data-field="highlights" 
                                                       data-city-code="${code}" 
                                                       placeholder="Beach relaxation\nUNESCO heritage sites\nLocal cuisine experiences">${this.escapeHtml(highlightsText)}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">3-Day Schedule (plain text)</label>
-                                            <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-24 md:h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm md:text-base" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (plain text)</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base" 
                                                       data-field="schedule" 
                                                       data-city-code="${code}" 
                                                       placeholder="Day 1: Arrival in first city\nDay 2: Travel and exploration\nDay 3: Final experiences and departure">${this.escapeHtml(scheduleText)}</textarea>
                                         </div>
                                     </div>
-                                    <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors duration-200 text-sm md:text-base" 
+                                    <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200 text-base" 
                                             data-package-type="3day" 
                                             data-city-code="${code}">
                                         💾 Save ${combo.name} Itinerary
@@ -1291,49 +1359,49 @@ class TunisiaWithSammy {
             const highlightsText = (itinerary.highlights || []).join('\n');
 
             return `
-                <div class="space-y-4 md:space-y-6">
-                    <div class="bg-purple-50 p-3 md:p-4 rounded-lg">
-                        <h3 class="text-base md:text-lg font-bold text-purple-800">7-Day Ultimate Coastal Journey</h3>
-                        <p class="text-purple-600 text-xs md:text-sm">Edit the complete 7-day coastal experience</p>
+                <div class="space-y-6">
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold text-purple-800">7-Day Ultimate Coastal Journey</h3>
+                        <p class="text-purple-600 text-sm">Edit the complete 7-day coastal experience</p>
                     </div>
                     
-                    <div class="bg-white border border-gray-200 rounded-lg p-4 md:p-6">
-                        <div class="flex items-center mb-3 md:mb-4">
-                            <span class="text-2xl mr-2 md:mr-3">🌍</span>
-                            <h3 class="text-lg md:text-xl font-bold text-gray-800">7-Day Complete Coastal Experience</h3>
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="text-2xl mr-3">🌍</span>
+                            <h3 class="text-xl font-bold text-gray-800">7-Day Complete Coastal Experience</h3>
                         </div>
-                        <div class="space-y-3 md:space-y-4">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Itinerary Title</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Itinerary Title</label>
                                 <input type="text" 
-                                       class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm md:text-base" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base" 
                                        value="${this.escapeHtml(itinerary.title || '7-Day Ultimate Tunisian Coastal Journey')}" 
                                        data-field="title" 
                                        data-city-code="complete">
                             </div>
                             <div>
-                                <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Description</label>
-                                <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-20 md:h-24 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm md:text-base" 
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base" 
                                           data-field="description" 
                                           data-city-code="complete">${this.escapeHtml(itinerary.description || 'The complete Tunisian coastal experience exploring every facet of Hammamet, Sousse, and Monastir. This comprehensive journey combines beach relaxation, historical exploration, and deep cultural immersion for the perfect Tunisian adventure.')}</textarea>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Highlights (one per line)</label>
-                                    <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-32 md:h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm md:text-base" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line)</label>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base" 
                                               data-field="highlights" 
                                               data-city-code="complete" 
                                               placeholder="Complete city exploration\nUNESCO World Heritage sites\nMediterranean beach experiences">${this.escapeHtml(highlightsText)}</textarea>
                                 </div>
                                 <div>
-                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">7-Day Schedule (plain text)</label>
-                                    <textarea class="w-full px-2 py-2 md:px-3 md:py-2 border border-gray-300 rounded-lg h-32 md:h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm md:text-base" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (plain text)</label>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base" 
                                               data-field="schedule" 
                                               data-city-code="complete" 
                                               placeholder="Day 1: Arrival in Hammamet\nDay 2: Hammamet exploration\nDay 3: Travel to Sousse\nDay 4: Sousse immersion\nDay 5: Travel to Monastir\nDay 6: Monastir discovery\nDay 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
                                 </div>
                             </div>
-                            <button class="save-itinerary-btn bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors duration-200 text-sm md:text-base" 
+                            <button class="save-itinerary-btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200 text-base" 
                                     data-package-type="7day" 
                                     data-city-code="complete">
                                 💾 Save 7-Day Itinerary
@@ -1473,15 +1541,15 @@ class TunisiaWithSammy {
         document.querySelectorAll('.custom-notification').forEach(n => n.remove());
 
         const notification = document.createElement('div');
-        notification.className = `custom-notification fixed top-4 right-4 z-50 p-3 md:p-4 rounded-lg shadow-lg max-w-xs md:max-w-sm transform transition-all duration-300 ${
+        notification.className = `custom-notification fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 ${
             type === 'success' ? 'bg-green-500 text-white' :
             type === 'error' ? 'bg-red-500 text-white' :
             'bg-blue-500 text-white'
         }`;
         notification.innerHTML = `
             <div class="flex items-center">
-                <span class="text-base md:text-lg mr-2">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
-                <span class="text-sm md:text-base">${message}</span>
+                <span class="text-lg mr-2">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                <span class="text-base">${message}</span>
             </div>
         `;
         
@@ -1516,7 +1584,7 @@ class TunisiaWithSammy {
         // Default fallback
         return {
             title: `${packageType} ${citiesText} Adventure`,
-            content: `<div class="text-center p-4 md:p-8"><p class="text-gray-600 text-sm md:text-base">Itinerary details will be available soon. Check back later!</p></div>`
+            content: `<div class="text-center p-8"><p class="text-gray-600 text-base">Itinerary details will be available soon. Check back later!</p></div>`
         };
     }
 }
