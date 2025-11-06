@@ -1,5 +1,5 @@
 // Tunisia with Sammy - Enhanced Itineraries with City Combinations
-// Fixed admin panel saving and schedule display issues
+// COMPLETELY FIXED admin panel saving and schedule display issues
 
 class TunisiaWithSammy {
     constructor() {
@@ -888,64 +888,168 @@ class TunisiaWithSammy {
     }
 
     formatScheduleSection(schedule, packageType, selectedCities) {
-        if (!schedule || Object.keys(schedule).length === 0) {
+        // If schedule is empty or invalid, return default schedule
+        if (!schedule || typeof schedule !== 'object' || Object.keys(schedule).length === 0) {
             return this.getDefaultSchedule(packageType, selectedCities);
         }
 
-        const isObject = typeof schedule === 'object' && !Array.isArray(schedule);
+        // Determine colors based on package type
+        let colors;
+        switch(packageType) {
+            case '1day':
+                colors = {
+                    bg: 'bg-blue-50',
+                    border: 'border-blue-200', 
+                    text: 'text-blue-800',
+                    badge: 'bg-blue-500'
+                };
+                break;
+            case '3day':
+                colors = {
+                    bg: 'bg-green-50',
+                    border: 'border-green-200',
+                    text: 'text-green-800', 
+                    badge: 'bg-green-500'
+                };
+                break;
+            case '7day':
+                colors = {
+                    bg: 'bg-purple-50',
+                    border: 'border-purple-200',
+                    text: 'text-purple-800',
+                    badge: 'bg-purple-500'
+                };
+                break;
+            default:
+                colors = {
+                    bg: 'bg-blue-50',
+                    border: 'border-blue-200',
+                    text: 'text-blue-800',
+                    badge: 'bg-blue-500'
+                };
+        }
+
+        // Create schedule items - SIMPLE TEXT DISPLAY
+        let scheduleHTML = '';
         
-        if (!isObject) {
-            return this.getDefaultSchedule(packageType, selectedCities);
+        if (schedule.text) {
+            // New simple text format
+            scheduleHTML = `
+                <div class="bg-white p-4 rounded-lg border ${colors.border}">
+                    <pre class="whitespace-pre-wrap font-sans text-sm ${colors.text}">${schedule.text}</pre>
+                </div>
+            `;
+        } else {
+            // Old format for backward compatibility
+            for (const [time, activity] of Object.entries(schedule)) {
+                if (time !== 'text') { // Skip the text property if it exists
+                    scheduleHTML += `
+                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
+                            <div class="flex items-center mb-2">
+                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">${time}</span>
+                                <h5 class="font-bold ${colors.text}">${this.getTimeTitle(time, selectedCities)}</h5>
+                            </div>
+                            <p class="${colors.text}">${activity}</p>
+                        </div>
+                    `;
+                }
+            }
         }
-
-        const colorClass = packageType === '1day' ? 'blue' : packageType === '3day' ? 'green' : 'purple';
 
         return `
-            <div class="bg-${colorClass}-50 p-6 rounded-lg border border-${colorClass}-200">
-                <h4 class="text-xl font-bold mb-4 text-${colorClass}-800">📅 Your ${packageType === '1day' ? 'Daily' : packageType === '3day' ? '3-Day' : '7-Day'} Schedule</h4>
+            <div class="${colors.bg} p-6 rounded-lg border ${colors.border}">
+                <h4 class="text-xl font-bold mb-4 ${colors.text}">📅 Your ${packageType === '1day' ? 'Daily' : packageType === '3day' ? '3-Day' : '7-Day'} Schedule</h4>
                 <div class="space-y-4">
-                    ${Object.entries(schedule).map(([day, activity]) => `
-                        <div class="bg-white p-4 rounded-lg border border-${colorClass}-200">
-                            <div class="flex items-center mb-2">
-                                <span class="bg-${colorClass}-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">${day}</span>
-                                <h5 class="font-bold text-${colorClass}-700">${this.getDayTitle(day, selectedCities)}</h5>
-                            </div>
-                            <p class="text-${colorClass}-800">${activity}</p>
-                        </div>
-                    `).join('')}
+                    ${scheduleHTML || '<p class="text-gray-500">Schedule details coming soon!</p>'}
                 </div>
             </div>
         `;
     }
 
+    getTimeTitle(time, selectedCities) {
+        const timeMap = {
+            'morning': 'Morning Exploration',
+            'afternoon': 'Afternoon Discovery', 
+            'evening': 'Evening Experience',
+            '8:00 AM': 'Morning Start',
+            '10:00 AM': 'Mid-Morning Activities',
+            '1:00 PM': 'Lunch & Relaxation',
+            '3:00 PM': 'Afternoon Exploration',
+            '5:00 PM': 'Late Afternoon',
+            '7:00 PM': 'Evening & Dinner',
+            'Day 1': `${selectedCities[0] ? this.formatCityName(selectedCities[0]) : 'Arrival & Exploration'}`,
+            'Day 2': `${selectedCities[1] ? this.formatCityName(selectedCities[1]) : 'Cultural Immersion'}`,
+            'Day 3': `${selectedCities[2] ? this.formatCityName(selectedCities[2]) : 'Discovery & Departure'}`,
+            'Day 4': 'Deep Cultural Experiences',
+            'Day 5': 'Historic Landmarks', 
+            'Day 6': 'Coastal Exploration',
+            'Day 7': 'Final Memories & Departure'
+        };
+
+        return timeMap[time] || time;
+    }
+
     getDefaultSchedule(packageType, selectedCities) {
-        const colorClass = packageType === '1day' ? 'blue' : packageType === '3day' ? 'green' : 'purple';
-        
+        let colors;
+        switch(packageType) {
+            case '1day':
+                colors = {
+                    bg: 'bg-blue-50',
+                    border: 'border-blue-200',
+                    text: 'text-blue-800',
+                    badge: 'bg-blue-500'
+                };
+                break;
+            case '3day':
+                colors = {
+                    bg: 'bg-green-50', 
+                    border: 'border-green-200',
+                    text: 'text-green-800',
+                    badge: 'bg-green-500'
+                };
+                break;
+            case '7day':
+                colors = {
+                    bg: 'bg-purple-50',
+                    border: 'border-purple-200',
+                    text: 'text-purple-800', 
+                    badge: 'bg-purple-500'
+                };
+                break;
+            default:
+                colors = {
+                    bg: 'bg-blue-50',
+                    border: 'border-blue-200',
+                    text: 'text-blue-800',
+                    badge: 'bg-blue-500'
+                };
+        }
+
         if (packageType === '1day') {
             return `
-                <div class="bg-${colorClass}-50 p-6 rounded-lg border border-${colorClass}-200">
-                    <h4 class="text-xl font-bold mb-4 text-${colorClass}-800">📅 Your Daily Schedule</h4>
+                <div class="${colors.bg} p-6 rounded-lg border ${colors.border}">
+                    <h4 class="text-xl font-bold mb-4 ${colors.text}">📅 Your Daily Schedule</h4>
                     <div class="space-y-4">
-                        <div class="bg-white p-4 rounded-lg border border-${colorClass}-200">
+                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
                             <div class="flex items-center mb-2">
-                                <span class="bg-${colorClass}-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Morning</span>
-                                <h5 class="font-bold text-${colorClass}-700">Arrival & First Exploration</h5>
+                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Morning</span>
+                                <h5 class="font-bold ${colors.text}">Arrival & First Exploration</h5>
                             </div>
-                            <p class="text-${colorClass}-800">Start your day with arrival and initial exploration of the city's main attractions.</p>
+                            <p class="${colors.text}">Start your day with arrival and initial exploration of the city's main attractions.</p>
                         </div>
-                        <div class="bg-white p-4 rounded-lg border border-${colorClass}-200">
+                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
                             <div class="flex items-center mb-2">
-                                <span class="bg-${colorClass}-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Afternoon</span>
-                                <h5 class="font-bold text-${colorClass}-700">Cultural Immersion</h5>
+                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Afternoon</span>
+                                <h5 class="font-bold ${colors.text}">Cultural Immersion</h5>
                             </div>
-                            <p class="text-${colorClass}-800">Experience local culture, visit historical sites, and enjoy authentic cuisine.</p>
+                            <p class="${colors.text}">Experience local culture, visit historical sites, and enjoy authentic cuisine.</p>
                         </div>
-                        <div class="bg-white p-4 rounded-lg border border-${colorClass}-200">
+                        <div class="bg-white p-4 rounded-lg border ${colors.border}">
                             <div class="flex items-center mb-2">
-                                <span class="bg-${colorClass}-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Evening</span>
-                                <h5 class="font-bold text-${colorClass}-700">Relaxation & Departure</h5>
+                                <span class="${colors.badge} text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Evening</span>
+                                <h5 class="font-bold ${colors.text}">Relaxation & Departure</h5>
                             </div>
-                            <p class="text-${colorClass}-800">Evening relaxation, souvenir shopping, and departure preparations.</p>
+                            <p class="${colors.text}">Evening relaxation, souvenir shopping, and departure preparations.</p>
                         </div>
                     </div>
                 </div>
@@ -954,20 +1058,6 @@ class TunisiaWithSammy {
 
         // Return empty if no schedule data
         return '';
-    }
-
-    getDayTitle(day, selectedCities) {
-        const dayMap = {
-            'Day 1': `${selectedCities[0] ? this.formatCityName(selectedCities[0]) : 'Arrival & Exploration'}`,
-            'Day 2': `${selectedCities[1] ? this.formatCityName(selectedCities[1]) : 'Cultural Immersion'}`,
-            'Day 3': `${selectedCities[2] ? this.formatCityName(selectedCities[2]) : 'Discovery & Departure'}`,
-            'Day 4': 'Deep Cultural Experiences',
-            'Day 5': 'Historic Landmarks',
-            'Day 6': 'Coastal Exploration',
-            'Day 7': 'Final Memories & Departure'
-        };
-
-        return dayMap[day] || day;
     }
 
     formatCityName(cityCode) {
@@ -1294,7 +1384,7 @@ class TunisiaWithSammy {
         document.body.style.overflow = 'auto';
     }
 
-    // Enhanced Admin Panel Methods - FIXED VERSION
+    // Enhanced Admin Panel Methods - COMPLETELY FIXED VERSION
     async showAdminPanel() {
         if (!this.isAdmin) {
             this.showErrorMessage('Access denied. Admin privileges required.');
@@ -1364,6 +1454,8 @@ class TunisiaWithSammy {
                     </div>
                     ${Object.entries(cities).map(([code, city]) => {
                         const itinerary = itineraries?.find(i => i.city_code === code) || {};
+                        const scheduleText = itinerary.schedule?.text || '';
+                        
                         return `
                             <div class="bg-white border border-gray-200 rounded-lg p-6">
                                 <div class="flex items-center mb-4">
@@ -1393,11 +1485,17 @@ class TunisiaWithSammy {
                                                       data-city-code="${code}">${(itinerary.highlights || []).join('\n')}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (JSON format - {"Day": "Activity"})</label>
-                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (Write your schedule in plain text)</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                                       data-field="schedule" 
-                                                      data-city-code="${code}">${this.scheduleToJSON(itinerary.schedule)}</textarea>
-                                            <p class="text-xs text-gray-500 mt-1">Example: {"Morning": "Beach relaxation", "Afternoon": "Medina exploration"}</p>
+                                                      data-city-code="${code}" 
+                                                      placeholder="Example:
+8:00 AM: Arrival and breakfast
+10:00 AM: Beach relaxation
+1:00 PM: Traditional lunch
+3:00 PM: Medina exploration
+6:00 PM: Sunset views
+8:00 PM: Dinner and departure">${scheduleText}</textarea>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1440,6 +1538,8 @@ class TunisiaWithSammy {
                     </div>
                     ${Object.entries(combinations).map(([code, combo]) => {
                         const itinerary = itineraries?.find(i => i.city_code === code) || {};
+                        const scheduleText = itinerary.schedule?.text || '';
+                        
                         return `
                             <div class="bg-white border border-gray-200 rounded-lg p-6">
                                 <div class="flex items-center mb-4">
@@ -1469,11 +1569,14 @@ class TunisiaWithSammy {
                                                       data-city-code="${code}">${(itinerary.highlights || []).join('\n')}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (JSON format - {"Day 1": "Activity"})</label>
-                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (Write your schedule in plain text)</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                                                       data-field="schedule" 
-                                                      data-city-code="${code}">${this.scheduleToJSON(itinerary.schedule)}</textarea>
-                                            <p class="text-xs text-gray-500 mt-1">Example: {"Day 1": "Hammamet arrival", "Day 2": "Travel to Sousse"}</p>
+                                                      data-city-code="${code}" 
+                                                      placeholder="Example:
+Day 1: Arrival in Hammamet, beach time, Medina exploration
+Day 2: Travel to Sousse, UNESCO sites, cultural immersion  
+Day 3: Local markets, souvenir shopping, departure">${scheduleText}</textarea>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1502,6 +1605,7 @@ class TunisiaWithSammy {
                 .single();
 
             const itinerary = itineraries || {};
+            const scheduleText = itinerary.schedule?.text || '';
 
             return `
                 <div class="space-y-6">
@@ -1538,11 +1642,18 @@ class TunisiaWithSammy {
                                               data-city-code="complete">${(itinerary.highlights || []).join('\n')}</textarea>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (JSON format - {"Day 1": "Activity"})</label>
-                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (Write your schedule in plain text)</label>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
                                               data-field="schedule" 
-                                              data-city-code="complete">${this.scheduleToJSON(itinerary.schedule)}</textarea>
-                                    <p class="text-xs text-gray-500 mt-1">Example: {"Day 1": "Hammamet arrival", "Day 2": "Full city exploration"}</p>
+                                              data-city-code="complete" 
+                                              placeholder="Example:
+Day 1: Arrival in Hammamet, beach relaxation, Medina introduction
+Day 2: Full Hammamet exploration, local crafts, traditional dinner
+Day 3: Travel to Sousse, UNESCO Medina exploration, Ribat fortress
+Day 4: Sousse cultural immersion, museums, local markets
+Day 5: Travel to Monastir, historic sites, coastal photography
+Day 6: Monastir discovery, marina exploration, seafood dining
+Day 7: Final shopping, favorite spots, departure preparations">${scheduleText}</textarea>
                                 </div>
                             </div>
                             <button class="save-itinerary-btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1560,18 +1671,6 @@ class TunisiaWithSammy {
         }
     }
 
-    scheduleToJSON(schedule) {
-        if (!schedule) return '{}';
-        if (typeof schedule === 'string') {
-            try {
-                return JSON.stringify(JSON.parse(schedule), null, 2);
-            } catch {
-                return '{}';
-            }
-        }
-        return JSON.stringify(schedule, null, 2);
-    }
-
     async handleSaveItinerary(packageType, cityCode) {
         if (!this.isAdmin) {
             this.showErrorMessage('Admin access required to save itineraries.');
@@ -1585,16 +1684,9 @@ class TunisiaWithSammy {
             const description = document.querySelector(`textarea[data-field="description"][data-city-code="${cityCode}"]`)?.value;
             const highlights = document.querySelector(`textarea[data-field="highlights"][data-city-code="${cityCode}"]`)?.value.split('\n').filter(h => h.trim());
             
-            // Parse schedule from JSON
+            // Get schedule as plain text - SIMPLE TEXT FORMAT
             const scheduleText = document.querySelector(`textarea[data-field="schedule"][data-city-code="${cityCode}"]`)?.value;
-            let schedule = {};
-            try {
-                schedule = JSON.parse(scheduleText || '{}');
-            } catch (error) {
-                console.error('Error parsing schedule JSON:', error);
-                this.showErrorMessage('Invalid schedule format. Please use valid JSON.');
-                return;
-            }
+            const schedule = { text: scheduleText };
 
             const itineraryData = {
                 package_type: packageType,
@@ -1634,7 +1726,9 @@ class TunisiaWithSammy {
             this.showSuccessMessage(`✅ ${packageType} itinerary for ${cityCode} ${existing ? 'updated' : 'created'} successfully!`);
             
             // Reload the admin content to show updated data
-            await this.loadAdminContent(packageType);
+            setTimeout(async () => {
+                await this.loadAdminContent(packageType);
+            }, 500);
             
         } catch (error) {
             console.error('Error saving itinerary:', error);
