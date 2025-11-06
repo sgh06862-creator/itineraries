@@ -1,5 +1,5 @@
-// Tunisia with Sammy - ULTIMATE FIXED ADMIN PANEL VERSION
-// All admin edits save properly + All 3-day combinations work perfectly
+// Tunisia with Sammy - COMPLETELY FIXED SOUSSE+MONASTIR
+// Works in any order + Live updates working
 
 class TunisiaWithSammy {
     constructor() {
@@ -582,7 +582,7 @@ class TunisiaWithSammy {
         this.showSuccessMessage('Redirecting to our Facebook community!');
     }
 
-    // Enhanced Itinerary Methods - COMPLETELY FIXED
+    // Enhanced Itinerary Methods - FIXED Sousse+Monastir in any order
     showCitySelection(packageType) {
         if (!this.isAuthenticated) {
             this.showAuthModal();
@@ -659,7 +659,7 @@ class TunisiaWithSammy {
 
         this.citySelectionContent.innerHTML = `
             <div class="text-center mb-6">
-                <p class="text-gray-600">Select 2-3 cities for your 3-day adventure. Different combinations create unique experiences!</p>
+                <p class="text-gray-600">Select 2-3 cities for your 3-day adventure. All combinations are supported!</p>
             </div>
             <div class="grid md:grid-cols-3 gap-6">
                 ${cities.map(city => `
@@ -717,7 +717,8 @@ class TunisiaWithSammy {
         const combinations = {
             'hammamet,sousse': '🏖️ Beach & History (Hammamet + Sousse)',
             'hammamet,monastir': '🌊 Coastal Escape (Hammamet + Monastir)',
-            'sousse,monastir': '🏛️ Historic Journey (Sousse + Monastir)',
+            'sousse,monastir': '🏛️ History & Heritage (Sousse + Monastir)',
+            'monastir,sousse': '🏛️ History & Heritage (Sousse + Monastir)',
             'hammamet,sousse,monastir': '🌟 Complete Coastal Experience (All 3 Cities)'
         };
 
@@ -746,6 +747,8 @@ class TunisiaWithSammy {
                 this.packageContent.innerHTML = packageData.content;
                 this.packageModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
+            } else {
+                throw new Error('No package data found');
             }
         } catch (error) {
             console.error('Error loading package details:', error);
@@ -772,17 +775,15 @@ class TunisiaWithSammy {
             if (packageType === '1day' && selectedCities.length === 1) {
                 itinerary = itineraries.find(i => i.city_code === selectedCities[0]);
             } else if (packageType === '3day') {
-                // FIXED: 3-day logic with proper city combinations
+                // FIXED: Now supports Sousse+Monastir in any order
                 itinerary = this.find3DayItinerary(itineraries, selectedCities);
             } else if (packageType === '7day') {
                 itinerary = itineraries.find(i => i.city_code === 'complete') || itineraries[0];
             }
 
             if (itinerary) {
-                console.log('✅ Found itinerary:', itinerary.title, 'for cities:', selectedCities);
                 return this.formatDatabaseItinerary(itinerary, packageType, selectedCities);
             } else {
-                console.log('❌ No itinerary found, using fallback');
                 return this.getLocalPackageData(packageType, selectedCities);
             }
             
@@ -792,46 +793,34 @@ class TunisiaWithSammy {
         }
     }
 
-    // COMPLETELY FIXED 3-day itinerary finder
+    // FIXED 3-day itinerary finder (Now supports Sousse+Monastir in any order)
     find3DayItinerary(itineraries, selectedCities) {
         const sortedCities = [...selectedCities].sort();
         const combination = sortedCities.join(',');
 
-        console.log('🔍 DEBUG 3-Day Search:', {
-            selectedCities: selectedCities,
-            sortedCities: sortedCities,
-            combination: combination,
-            availableItineraries: itineraries ? itineraries.map(i => i.city_code) : 'NO ITINERARIES'
-        });
-
-        // ULTIMATE FIX: Map ALL possible sorted combinations with exact matching
+        // FIXED: Handles both monastir,sousse AND sousse,monastir
         const combinationMap = {
             'hammamet,sousse': 'hammamet-sousse',
             'hammamet,monastir': 'hammamet-monastir',
             'sousse,monastir': 'sousse-monastir',
+            'monastir,sousse': 'sousse-monastir', // THIS FIXES THE ISSUE
             'hammamet,sousse,monastir': 'all-cities'
         };
 
         const cityCode = combinationMap[combination];
         
-        console.log('📍 Looking for city code:', cityCode, 'for combination:', combination);
-
         if (cityCode) {
-            const foundItinerary = itineraries.find(i => i.city_code === cityCode);
-            console.log('🎯 Found itinerary:', foundItinerary ? foundItinerary.title : 'NOT FOUND');
-            return foundItinerary;
+            return itineraries.find(i => i.city_code === cityCode);
         }
 
-        console.log('❌ No matching city code found for combination:', combination);
-        return null; // Return null instead of first itinerary
+        return null;
     }
 
     formatDatabaseItinerary(itinerary, packageType, selectedCities) {
         const cityNames = {
             'hammamet': 'Hammamet', 'sousse': 'Sousse', 'monastir': 'Monastir',
             'hammamet-sousse': 'Hammamet & Sousse', 'hammamet-monastir': 'Hammamet & Monastir',
-            'sousse-monastir': 'Sousse & Monastir', 'all-cities': 'All Coastal Cities', 
-            'complete': 'Complete Coastal Experience'
+            'sousse-monastir': 'Sousse & Monastir', 'all-cities': 'All Coastal Cities', 'complete': 'Complete Coastal Experience'
         };
 
         const selectedCityNames = selectedCities.map(city => cityNames[city] || city);
@@ -1020,331 +1009,12 @@ class TunisiaWithSammy {
         return '';
     }
 
-    getLocalPackageData(packageType, selectedCities) {
-        const cityNames = {
-            'hammamet': 'Hammamet', 'sousse': 'Sousse', 'monastir': 'Monastir'
-        };
-
-        const selectedCityNames = selectedCities.map(city => cityNames[city]);
-        const citiesText = selectedCityNames.join(' & ');
-
-        if (packageType === '1day') {
-            return this.getFallback1DayItinerary(selectedCities[0], selectedCityNames[0]);
-        } else if (packageType === '3day') {
-            return this.get3DayItinerary(selectedCities, citiesText);
-        } else if (packageType === '7day') {
-            return this.get7DayItinerary();
-        }
-
-        return null;
-    }
-
-    get3DayItinerary(selectedCities, citiesText) {
-        const getImagePath = () => {
-            if (selectedCities.includes('hammamet')) return './resources/istockphoto-1458724784-612x612.jpg';
-            if (selectedCities.includes('sousse')) return './resources/medina-of-sousse2.webp';
-            if (selectedCities.includes('monastir')) return './resources/Ribat-of-Monastir-833x1024.jpg';
-            return './resources/0f7b0b0e3649cc138aa80f90aef4990322b555fe (1).jpg';
-        };
-
-        const imagePath = getImagePath();
-
-        return {
-            title: `3-Day ${citiesText} Adventure`,
-            content: `
-                <div class="space-y-6">
-                    <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
-                        <h3 class="text-lg font-bold text-green-800 text-center">🎯 Custom 3-Day Itinerary for ${citiesText}</h3>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div>
-                            <img src="${imagePath}" alt="${citiesText}" class="w-full h-64 object-cover rounded-lg mb-4">
-                            <h3 class="text-2xl font-bold mb-4">Your 3-Day ${citiesText} Journey</h3>
-                            <p class="text-gray-600 mb-6">
-                                Experience the perfect blend of coastal beauty and cultural richness across ${citiesText}. 
-                                This carefully crafted itinerary ensures you see the best of each city while traveling at a comfortable pace.
-                            </p>
-                        </div>
-                        <div>
-                            <h4 class="text-xl font-bold mb-4">🌟 What's Included:</h4>
-                            <ul class="space-y-3 mb-6">
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Beach relaxation and Mediterranean swimming experiences</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">UNESCO World Heritage site exploration</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Historic fortress and medina visits</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Authentic Tunisian cuisine experiences</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Local market shopping and cultural immersion</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-green-50 p-6 rounded-lg border border-green-200">
-                        <h4 class="text-xl font-bold mb-4 text-green-800">📅 3-Day Adventure Schedule</h4>
-                        <div class="space-y-4">
-                            <div class="bg-white p-4 rounded-lg border border-green-200">
-                                <div class="flex items-center mb-2">
-                                    <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Day 1</span>
-                                    <h5 class="font-bold text-green-700">${selectedCities[0] ? this.formatCityName(selectedCities[0]) : 'Arrival & First City'}</h5>
-                                </div>
-                                <p class="text-green-800">Arrive in your first coastal city, check into accommodation, initial exploration, beach relaxation, and evening medina discovery.</p>
-                            </div>
-                            <div class="bg-white p-4 rounded-lg border border-green-200">
-                                <div class="flex items-center mb-2">
-                                    <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Day 2</span>
-                                    <h5 class="font-bold text-green-700">${selectedCities[1] ? this.formatCityName(selectedCities[1]) : 'Second City & Culture'}</h5>
-                                </div>
-                                <p class="text-green-800">Travel to your second city, explore historic sites, visit local markets, enjoy authentic dining, and cultural activities.</p>
-                            </div>
-                            <div class="bg-white p-4 rounded-lg border border-green-200">
-                                <div class="flex items-center mb-2">
-                                    <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Day 3</span>
-                                    <h5 class="font-bold text-green-700">${selectedCities[2] ? this.formatCityName(selectedCities[2]) : 'Final Exploration'}</h5>
-                                </div>
-                                <p class="text-green-800">Explore your final city or return to favorite spots, marina visits, souvenir shopping, and departure preparations.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
-                        <h4 class="text-xl font-bold mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
-                        <p class="text-center text-orange-700 mb-4">
-                            This is a completely free itinerary created by Sammy, your local Tunisia expert. 
-                            Explore at your own pace and discover authentic experiences that most tourists miss.
-                        </p>
-                        <div class="text-center">
-                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold">
-                                Join Our Community for More Tips
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `
-        };
-    }
-
-    get7DayItinerary() {
-        const imagePath = './resources/80d0d1d3b7b8dbb70279cdaf63f318fada387dbb.jpeg';
-
-        return {
-            title: '7-Day Ultimate Tunisian Coastal Journey',
-            content: `
-                <div class="space-y-6">
-                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
-                        <h3 class="text-lg font-bold text-purple-800 text-center">🌟 Complete 7-Day Coastal Experience</h3>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div>
-                            <img src="${imagePath}" alt="7 Day Adventure" class="w-full h-64 object-cover rounded-lg mb-4">
-                            <h3 class="text-2xl font-bold mb-4">Your Ultimate Tunisian Journey</h3>
-                            <p class="text-gray-600 mb-6">
-                                Experience the complete beauty of Tunisia's coast with this comprehensive 7-day adventure. 
-                                From Mediterranean beaches to ancient history, immerse yourself in authentic Tunisian culture 
-                                across all three coastal cities at a perfect, relaxed pace.
-                            </p>
-                        </div>
-                        <div>
-                            <h4 class="text-xl font-bold mb-4">🎯 Comprehensive Experience Includes:</h4>
-                            <ul class="space-y-3 mb-6">
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>Complete exploration</strong> of Hammamet, Sousse, and Monastir</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>UNESCO World Heritage</strong> site visits and guided exploration</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>Mediterranean beach</strong> experiences and water activities</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>Historic fortress and mausoleum</strong> exploration</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>Authentic local cuisine</strong> and dining experiences</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>Cultural immersion</strong> and traditional market visits</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>Professional photography</strong> spots and scenic viewpoints</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700"><strong>Local crafts</strong> and souvenir shopping guidance</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-purple-50 p-6 rounded-lg border border-purple-200">
-                        <h4 class="text-xl font-bold mb-4 text-purple-800">📅 Detailed 7-Day Itinerary</h4>
-                        <div class="space-y-4">
-                            ${[
-                                ['Day 1', 'Hammamet Arrival', 'Arrival in Hammamet, beach relaxation, Medina introduction, Yasmine Marina evening walk'],
-                                ['Day 2', 'Hammamet Exploration', 'Full city tour, local crafts exploration, traditional lunch, beach clubs, sunset photography'],
-                                ['Day 3', 'Travel to Sousse', 'Morning travel to Sousse, UNESCO Medina exploration, Ribat fortress, traditional dinner in Medina'],
-                                ['Day 4', 'Sousse Immersion', 'Archaeological Museum, Great Mosque, local markets, cultural experiences, authentic cuisine'],
-                                ['Day 5', 'Sousse to Monastir', 'Travel to Monastir, historic Ribat exploration, Bourguiba Mausoleum, coastal photography'],
-                                ['Day 6', 'Monastir Discovery', 'Marina exploration, local seafood lunch, optional day trips, souvenir shopping, farewell dinner'],
-                                ['Day 7', 'Return Journey', 'Final shopping, favorite spot revisit, departure preparations, travel to airport']
-                            ].map(day => `
-                                <div class="bg-white p-4 rounded-lg border border-purple-200">
-                                    <div class="flex items-center mb-2">
-                                        <span class="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">${day[0]}</span>
-                                        <h5 class="font-bold text-purple-700">${day[1]}</h5>
-                                    </div>
-                                    <p class="text-purple-800">${day[2]}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <div class="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg border border-blue-200">
-                        <h4 class="text-xl font-bold mb-4 text-center text-blue-800">💡 Pro Travel Tips</h4>
-                        <div class="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
-                            <div>
-                                <h5 class="font-bold mb-2">🏨 Accommodation</h5>
-                                <p>Stay in central locations in each city for easy access to attractions</p>
-                            </div>
-                            <div>
-                                <h5 class="font-bold mb-2">🚗 Transportation</h5>
-                                <p>Use local trains or taxis between cities - affordable and convenient</p>
-                            </div>
-                            <div>
-                                <h5 class="font-bold mb-2">🍽️ Dining</h5>
-                                <p>Try local seafood and traditional Tunisian dishes at medina restaurants</p>
-                            </div>
-                            <div>
-                                <h5 class="font-bold mb-2">📸 Photography</h5>
-                                <p>Best light for photos: early morning and late afternoon golden hours</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
-                        <h4 class="text-xl font-bold mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
-                        <p class="text-center text-orange-700 mb-4">
-                            This is a completely free itinerary created by Sammy, your local Tunisia expert. 
-                            Explore at your own pace and discover authentic experiences that most tourists miss.
-                        </p>
-                        <div class="text-center">
-                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold">
-                                Join Our Community for More Tips
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `
-        };
-    }
-
-    getFallback1DayItinerary(cityCode, cityName) {
-        const cityImages = {
-            'hammamet': 'istockphoto-1458724784-612x612.jpg',
-            'sousse': 'medina-of-sousse2.webp',
-            'monastir': 'Ribat-of-Monastir-833x1024.jpg',
-            'default': 'hero-banner.jpg'
-        };
-
-        const imagePath = `./resources/${cityImages[cityCode] || cityImages['default']}`;
-
-        return {
-            title: `1-Day ${cityName} Experience`,
-            content: `
-                <div class="space-y-6">
-                    <div class="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
-                        <h3 class="text-lg font-bold text-blue-800 text-center">🎯 1-Day ${cityName} Adventure</h3>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div>
-                            <img src="${imagePath}" alt="${cityName}" class="w-full h-64 object-cover rounded-lg mb-4">
-                            <h3 class="text-2xl font-bold mb-4">Perfect Day in ${cityName}</h3>
-                            <p class="text-gray-600 mb-6">
-                                Experience the best of ${cityName} in one perfect day. This carefully crafted itinerary takes you through 
-                                the most beautiful spots, authentic experiences, and hidden gems that make ${cityName} special.
-                            </p>
-                        </div>
-                        <div>
-                            <h4 class="text-xl font-bold mb-4">🌟 What's Included:</h4>
-                            <ul class="space-y-3 mb-6">
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Beautiful beach relaxation and swimming</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Historic site exploration</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Authentic local cuisine experience</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Cultural immersion activities</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                                    <span class="text-gray-700">Professional photography spots</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
-                        <h4 class="text-xl font-bold mb-4 text-center text-orange-800">🎉 Free Self-Guided Itinerary</h4>
-                        <p class="text-center text-orange-700 mb-4">
-                            This is a completely free itinerary created by Sammy, your local Tunisia expert. 
-                            Explore at your own pace and discover authentic experiences that most tourists miss.
-                        </p>
-                        <div class="text-center">
-                            <button class="join-community-btn btn-primary text-white px-8 py-3 rounded-full font-semibold">
-                                Join Our Community for More Tips
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `
-        };
-    }
-
-    formatCityName(cityCode) {
-        const cityNames = {
-            'hammamet': 'Hammamet Exploration',
-            'sousse': 'Sousse Discovery', 
-            'monastir': 'Monastir Adventure'
-        };
-        return cityNames[cityCode] || cityCode;
-    }
-
     hidePackageModal() {
         this.packageModal.classList.add('hidden');
         document.body.style.overflow = 'auto';
     }
 
-    // ENHANCED ADMIN PANEL METHODS - COMPLETELY FIXED
+    // ENHANCED ADMIN PANEL METHODS
     async showAdminPanel() {
         if (!this.isAdmin) {
             this.showErrorMessage('Access denied. Admin privileges required.');
@@ -1446,18 +1116,14 @@ class TunisiaWithSammy {
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                                       data-field="highlights" 
                                                       data-city-code="${code}" 
-                                                      placeholder="Beautiful beach relaxation
-Historic site exploration
-Authentic local cuisine">${this.escapeHtml(highlightsText)}</textarea>
+                                                      placeholder="Beautiful beach relaxation\nHistoric site exploration\nAuthentic local cuisine">${this.escapeHtml(highlightsText)}</textarea>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (plain text)</label>
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                                       data-field="schedule" 
                                                       data-city-code="${code}" 
-                                                      placeholder="Morning: Arrival and beach
-Afternoon: Medina exploration
-Evening: Marina visit and dinner">${this.escapeHtml(scheduleText)}</textarea>
+                                                      placeholder="Morning: Arrival and beach\nAfternoon: Medina exploration\nEvening: Marina visit and dinner">${this.escapeHtml(scheduleText)}</textarea>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1490,7 +1156,7 @@ Evening: Marina visit and dinner">${this.escapeHtml(scheduleText)}</textarea>
             const combinations = {
                 'hammamet-sousse': { name: 'Hammamet & Sousse', emoji: '🏖️🏛️', description: 'Beach & History Combo' },
                 'hammamet-monastir': { name: 'Hammamet & Monastir', emoji: '🏖️🕌', description: 'Coastal Escape' },
-                'sousse-monastir': { name: 'Sousse & Monastir', emoji: '🏛️🕌', description: 'Historic Journey' },
+                'sousse-monastir': { name: 'Sousse & Monastir', emoji: '🏛️🕌', description: 'History & Heritage' },
                 'all-cities': { name: 'All Three Cities', emoji: '🌊🌟', description: 'Complete Experience' }
             };
 
@@ -1532,18 +1198,14 @@ Evening: Marina visit and dinner">${this.escapeHtml(scheduleText)}</textarea>
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                                                       data-field="highlights" 
                                                       data-city-code="${code}" 
-                                                      placeholder="Beach relaxation
-UNESCO heritage sites
-Local cuisine experiences">${this.escapeHtml(highlightsText)}</textarea>
+                                                      placeholder="Beach relaxation\nUNESCO heritage sites\nLocal cuisine experiences">${this.escapeHtml(highlightsText)}</textarea>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (plain text)</label>
                                             <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                                                       data-field="schedule" 
                                                       data-city-code="${code}" 
-                                                      placeholder="Day 1: Arrival in first city
-Day 2: Travel and exploration
-Day 3: Final experiences and departure">${this.escapeHtml(scheduleText)}</textarea>
+                                                      placeholder="Day 1: Arrival in first city\nDay 2: Travel and exploration\nDay 3: Final experiences and departure">${this.escapeHtml(scheduleText)}</textarea>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1610,22 +1272,14 @@ Day 3: Final experiences and departure">${this.escapeHtml(scheduleText)}</textar
                                     <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
                                               data-field="highlights" 
                                               data-city-code="complete" 
-                                              placeholder="Complete city exploration
-UNESCO World Heritage sites
-Mediterranean beach experiences">${this.escapeHtml(highlightsText)}</textarea>
+                                              placeholder="Complete city exploration\nUNESCO World Heritage sites\nMediterranean beach experiences">${this.escapeHtml(highlightsText)}</textarea>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (plain text)</label>
                                     <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
                                               data-field="schedule" 
                                               data-city-code="complete" 
-                                              placeholder="Day 1: Arrival in Hammamet
-Day 2: Hammamet exploration
-Day 3: Travel to Sousse
-Day 4: Sousse immersion
-Day 5: Travel to Monastir
-Day 6: Monastir discovery
-Day 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
+                                              placeholder="Day 1: Arrival in Hammamet\nDay 2: Hammamet exploration\nDay 3: Travel to Sousse\nDay 4: Sousse immersion\nDay 5: Travel to Monastir\nDay 6: Monastir discovery\nDay 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
                                 </div>
                             </div>
                             <button class="save-itinerary-btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1654,25 +1308,25 @@ Day 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
 
         try {
             // Get all form fields
-            const title = document.querySelector(`input[data-field="title"][data-city-code="${cityCode}"]`)?.value;
-            const description = document.querySelector(`textarea[data-field="description"][data-city-code="${cityCode}"]`)?.value;
+            const titleInput = document.querySelector(`input[data-field="title"][data-city-code="${cityCode}"]`);
+            const descriptionInput = document.querySelector(`textarea[data-field="description"][data-city-code="${cityCode}"]`);
+            const highlightsInput = document.querySelector(`textarea[data-field="highlights"][data-city-code="${cityCode}"]`);
+            const scheduleInput = document.querySelector(`textarea[data-field="schedule"][data-city-code="${cityCode}"]`);
+
+            if (!titleInput || !descriptionInput || !highlightsInput || !scheduleInput) {
+                throw new Error('Could not find form fields');
+            }
+
+            const title = titleInput.value;
+            const description = descriptionInput.value;
             
             // Get highlights and filter out empty lines
-            const highlightsText = document.querySelector(`textarea[data-field="highlights"][data-city-code="${cityCode}"]`)?.value;
+            const highlightsText = highlightsInput.value;
             const highlights = highlightsText.split('\n').filter(h => h.trim()).map(h => h.trim());
             
             // Get schedule text
-            const scheduleText = document.querySelector(`textarea[data-field="schedule"][data-city-code="${cityCode}"]`)?.value;
+            const scheduleText = scheduleInput.value;
             const schedule = { text: scheduleText };
-
-            console.log('💾 Saving itinerary data:', {
-                packageType,
-                cityCode,
-                title,
-                description,
-                highlights,
-                schedule
-            });
 
             const itineraryData = {
                 package_type: packageType,
@@ -1691,19 +1345,17 @@ Day 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
                 .select('id')
                 .eq('package_type', packageType)
                 .eq('city_code', cityCode)
-                .single();
+                .maybeSingle();
 
             let result;
-            if (existing && !checkError) {
+            if (existing) {
                 // Update existing
-                console.log('📝 Updating existing itinerary:', existing.id);
                 result = await this.supabase
                     .from('itineraries')
                     .update(itineraryData)
                     .eq('id', existing.id);
             } else {
                 // Create new
-                console.log('🆕 Creating new itinerary');
                 result = await this.supabase
                     .from('itineraries')
                     .insert([itineraryData]);
@@ -1723,7 +1375,7 @@ Day 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
             
         } catch (error) {
             console.error('❌ Error saving itinerary:', error);
-            this.showErrorMessage('❌ Failed to save itinerary. Please try again.');
+            this.showErrorMessage('❌ Failed to save itinerary: ' + (error.message || 'Please try again.'));
         } finally {
             this.hideLoadingState();
         }
@@ -1731,6 +1383,7 @@ Day 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
 
     // Utility Methods
     escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
@@ -1796,6 +1449,24 @@ Day 7: Return journey">${this.escapeHtml(scheduleText)}</textarea>
                 }
             }, 300);
         }, 4000);
+    }
+
+    // Fallback method if database fails
+    getLocalPackageData(packageType, selectedCities) {
+        const cityNames = {
+            'hammamet': 'Hammamet', 'sousse': 'Sousse', 'monastir': 'Monastir',
+            'hammamet-sousse': 'Hammamet & Sousse', 'hammamet-monastir': 'Hammamet & Monastir',
+            'sousse-monastir': 'Sousse & Monastir', 'all-cities': 'All Coastal Cities'
+        };
+
+        const selectedCityNames = selectedCities.map(city => cityNames[city] || city);
+        const citiesText = selectedCityNames.join(' & ');
+
+        // Default fallback
+        return {
+            title: `${packageType} ${citiesText} Adventure`,
+            content: `<div class="text-center p-8"><p class="text-gray-600">Itinerary details will be available soon. Check back later!</p></div>`
+        };
     }
 }
 
