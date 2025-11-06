@@ -1,5 +1,5 @@
 // Tunisia with Sammy - Enhanced Itineraries with City Combinations
-// Fixed image paths and removed duplicate community buttons
+// Fixed admin panel saving and schedule display issues
 
 class TunisiaWithSammy {
     constructor() {
@@ -888,11 +888,15 @@ class TunisiaWithSammy {
     }
 
     formatScheduleSection(schedule, packageType, selectedCities) {
-        if (!schedule || Object.keys(schedule).length === 0) return '';
+        if (!schedule || Object.keys(schedule).length === 0) {
+            return this.getDefaultSchedule(packageType, selectedCities);
+        }
 
         const isObject = typeof schedule === 'object' && !Array.isArray(schedule);
         
-        if (!isObject) return '';
+        if (!isObject) {
+            return this.getDefaultSchedule(packageType, selectedCities);
+        }
 
         const colorClass = packageType === '1day' ? 'blue' : packageType === '3day' ? 'green' : 'purple';
 
@@ -912,6 +916,44 @@ class TunisiaWithSammy {
                 </div>
             </div>
         `;
+    }
+
+    getDefaultSchedule(packageType, selectedCities) {
+        const colorClass = packageType === '1day' ? 'blue' : packageType === '3day' ? 'green' : 'purple';
+        
+        if (packageType === '1day') {
+            return `
+                <div class="bg-${colorClass}-50 p-6 rounded-lg border border-${colorClass}-200">
+                    <h4 class="text-xl font-bold mb-4 text-${colorClass}-800">📅 Your Daily Schedule</h4>
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-lg border border-${colorClass}-200">
+                            <div class="flex items-center mb-2">
+                                <span class="bg-${colorClass}-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Morning</span>
+                                <h5 class="font-bold text-${colorClass}-700">Arrival & First Exploration</h5>
+                            </div>
+                            <p class="text-${colorClass}-800">Start your day with arrival and initial exploration of the city's main attractions.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-${colorClass}-200">
+                            <div class="flex items-center mb-2">
+                                <span class="bg-${colorClass}-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Afternoon</span>
+                                <h5 class="font-bold text-${colorClass}-700">Cultural Immersion</h5>
+                            </div>
+                            <p class="text-${colorClass}-800">Experience local culture, visit historical sites, and enjoy authentic cuisine.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border border-${colorClass}-200">
+                            <div class="flex items-center mb-2">
+                                <span class="bg-${colorClass}-500 text-white px-3 py-1 rounded-full text-sm font-bold mr-3">Evening</span>
+                                <h5 class="font-bold text-${colorClass}-700">Relaxation & Departure</h5>
+                            </div>
+                            <p class="text-${colorClass}-800">Evening relaxation, souvenir shopping, and departure preparations.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Return empty if no schedule data
+        return '';
     }
 
     getDayTitle(day, selectedCities) {
@@ -1252,7 +1294,7 @@ class TunisiaWithSammy {
         document.body.style.overflow = 'auto';
     }
 
-    // Enhanced Admin Panel Methods
+    // Enhanced Admin Panel Methods - FIXED VERSION
     async showAdminPanel() {
         if (!this.isAdmin) {
             this.showErrorMessage('Access denied. Admin privileges required.');
@@ -1351,10 +1393,11 @@ class TunisiaWithSammy {
                                                       data-city-code="${code}">${(itinerary.highlights || []).join('\n')}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (time: activity)</label>
-                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule (JSON format - {"Day": "Activity"})</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm" 
                                                       data-field="schedule" 
-                                                      data-city-code="${code}">${this.scheduleToString(itinerary.schedule)}</textarea>
+                                                      data-city-code="${code}">${this.scheduleToJSON(itinerary.schedule)}</textarea>
+                                            <p class="text-xs text-gray-500 mt-1">Example: {"Morning": "Beach relaxation", "Afternoon": "Medina exploration"}</p>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1426,10 +1469,11 @@ class TunisiaWithSammy {
                                                       data-city-code="${code}">${(itinerary.highlights || []).join('\n')}</textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (Day: description)</label>
-                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">3-Day Schedule (JSON format - {"Day 1": "Activity"})</label>
+                                            <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm" 
                                                       data-field="schedule" 
-                                                      data-city-code="${code}">${this.scheduleToString(itinerary.schedule)}</textarea>
+                                                      data-city-code="${code}">${this.scheduleToJSON(itinerary.schedule)}</textarea>
+                                            <p class="text-xs text-gray-500 mt-1">Example: {"Day 1": "Hammamet arrival", "Day 2": "Travel to Sousse"}</p>
                                         </div>
                                     </div>
                                     <button class="save-itinerary-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1494,10 +1538,11 @@ class TunisiaWithSammy {
                                               data-city-code="complete">${(itinerary.highlights || []).join('\n')}</textarea>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (Day: description)</label>
-                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">7-Day Schedule (JSON format - {"Day 1": "Activity"})</label>
+                                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm" 
                                               data-field="schedule" 
-                                              data-city-code="complete">${this.scheduleToString(itinerary.schedule)}</textarea>
+                                              data-city-code="complete">${this.scheduleToJSON(itinerary.schedule)}</textarea>
+                                    <p class="text-xs text-gray-500 mt-1">Example: {"Day 1": "Hammamet arrival", "Day 2": "Full city exploration"}</p>
                                 </div>
                             </div>
                             <button class="save-itinerary-btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200" 
@@ -1515,13 +1560,16 @@ class TunisiaWithSammy {
         }
     }
 
-    scheduleToString(schedule) {
-        if (!schedule) return '';
-        if (typeof schedule === 'string') return schedule;
-        
-        return Object.entries(schedule)
-            .map(([time, activity]) => `${time}: ${activity}`)
-            .join('\n');
+    scheduleToJSON(schedule) {
+        if (!schedule) return '{}';
+        if (typeof schedule === 'string') {
+            try {
+                return JSON.stringify(JSON.parse(schedule), null, 2);
+            } catch {
+                return '{}';
+            }
+        }
+        return JSON.stringify(schedule, null, 2);
     }
 
     async handleSaveItinerary(packageType, cityCode) {
@@ -1536,7 +1584,17 @@ class TunisiaWithSammy {
             const title = document.querySelector(`input[data-field="title"][data-city-code="${cityCode}"]`)?.value;
             const description = document.querySelector(`textarea[data-field="description"][data-city-code="${cityCode}"]`)?.value;
             const highlights = document.querySelector(`textarea[data-field="highlights"][data-city-code="${cityCode}"]`)?.value.split('\n').filter(h => h.trim());
-            const schedule = document.querySelector(`textarea[data-field="schedule"][data-city-code="${cityCode}"]`)?.value;
+            
+            // Parse schedule from JSON
+            const scheduleText = document.querySelector(`textarea[data-field="schedule"][data-city-code="${cityCode}"]`)?.value;
+            let schedule = {};
+            try {
+                schedule = JSON.parse(scheduleText || '{}');
+            } catch (error) {
+                console.error('Error parsing schedule JSON:', error);
+                this.showErrorMessage('Invalid schedule format. Please use valid JSON.');
+                return;
+            }
 
             const itineraryData = {
                 package_type: packageType,
@@ -1574,6 +1632,9 @@ class TunisiaWithSammy {
             if (result.error) throw result.error;
 
             this.showSuccessMessage(`✅ ${packageType} itinerary for ${cityCode} ${existing ? 'updated' : 'created'} successfully!`);
+            
+            // Reload the admin content to show updated data
+            await this.loadAdminContent(packageType);
             
         } catch (error) {
             console.error('Error saving itinerary:', error);
