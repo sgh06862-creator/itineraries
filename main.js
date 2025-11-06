@@ -1,5 +1,5 @@
-// Tunisia with Sammy - MOBILE FIXED + SOUSSE+MONASTIR WORKING
-// Mobile responsive + All combinations working
+// Tunisia with Sammy - AUTO LOGIN AFTER SIGNUP + MOBILE FIXED
+// Users login automatically after signing up
 
 class TunisiaWithSammy {
     constructor() {
@@ -529,7 +529,8 @@ class TunisiaWithSammy {
 
         try {
             if (isSignup) {
-                const { data, error } = await this.supabase.auth.signUp({
+                // SIGN UP - then automatically log them in
+                const { data: signUpData, error: signUpError } = await this.supabase.auth.signUp({
                     email: email,
                     password: password,
                     options: {
@@ -539,12 +540,33 @@ class TunisiaWithSammy {
                     }
                 });
 
-                if (error) throw error;
+                if (signUpError) throw signUpError;
 
-                this.showSuccessMessage('Account created successfully! Please check your email for verification.');
+                // AUTO LOGIN: Immediately sign in the user after successful signup
+                const { data: signInData, error: signInError } = await this.supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (signInError) {
+                    console.error('Auto-login failed:', signInError);
+                    // Even if auto-login fails, account was created successfully
+                    this.showSuccessMessage('Account created successfully! You can now sign in.');
+                    this.hideAuthModal();
+                    return;
+                }
+
+                // Auto-login successful
+                this.currentUser = signInData.user;
+                this.isAuthenticated = true;
+                await this.checkAdminStatus();
+                this.updateUIForAuthState();
+                this.showSuccessMessage('🎉 Welcome to Tunisia with Sammy! Account created and logged in successfully!');
                 this.hideAuthModal();
+                this.showDashboard();
                 
             } else {
+                // LOGIN - normal login flow
                 const { data, error } = await this.supabase.auth.signInWithPassword({
                     email: email,
                     password: password
